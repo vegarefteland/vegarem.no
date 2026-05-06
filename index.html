@@ -6,7 +6,7 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Vegar Efteland Melhus</title>
   <meta name="description" content="Design Portfolio">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="index, follow, noimageindex">
   <link rel="canonical" href="https://vegarem.no/">
   <!-- Open Graph -->
   <meta property="og:type"        content="website">
@@ -168,7 +168,7 @@
       left: 50%;
       transform: translateX(-50%);
       overflow: hidden;
-      cursor: default;
+      cursor: pointer;
     }
 
     .nav-pill {
@@ -552,6 +552,9 @@
     @keyframes cascadeIn {
       from { opacity: 0; transform: translateY(28px); filter: blur(2px); }
       to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+    }
+    .archive-img.cd-spin img {
+      border-radius: 50%;
     }
 
     /* Project pages still use the old fade-up — defined here so the
@@ -1220,9 +1223,7 @@
        Drop numbered images into images/archive/ — no code changes needed.
        ══════════════════════════════════════════════════════════════ -->
   <section id="page-archive" class="page" aria-label="Archive">
-    <p class="archive-intro">
-      A mix of smaller projects, experiments, ideas and random designs.
-    </p>
+    <p class="archive-intro"></p>
     <div class="archive-grid" id="archive-grid"></div>
   </section>
 
@@ -1323,6 +1324,8 @@
 
       // Re-render archive fresh each visit so shuffle + masonry are correct
       if (pageId === "archive") {
+        const intro = document.querySelector(".archive-intro");
+        if (intro) intro.textContent = SITE.archiveIntro || "";
         const grid = document.getElementById("archive-grid");
         grid.innerHTML = "";
         renderArchive();
@@ -1675,8 +1678,14 @@
       const left   = document.getElementById("nav-left");
       const right  = document.getElementById("nav-right");
       const center = document.querySelector(".nav-pill-name");
+      const centerPill = document.querySelector(".nav-pill-center");
       left.innerHTML  = "";
       right.innerHTML = "";
+
+      centerPill.onclick = () => navigate("home");
+      centerPill.setAttribute("role", "button");
+      centerPill.setAttribute("tabindex", "0");
+      centerPill.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("home"); } };
 
       const btn = document.createElement("button");
       btn.className = "theme-toggle";
@@ -1831,6 +1840,71 @@
       });
     }
 
+    function initCdSpin(cell, img) {
+      const FULL_SPEED = 360 / 8000; // deg/ms — one full rotation per 8 s
+      const ACCEL      = 0.003;      // exponential ease-in factor for spin-up
+
+      let angle    = 0;
+      let speed    = FULL_SPEED;
+      let prev     = null;
+      let raf      = null;
+      let hovered  = false;
+      let snapFrom = 0;
+      let snapStart = null;
+
+      function easeOut(t) { return 1 - (1 - t) * (1 - t); } // quadratic
+
+      function tick(now) {
+        if (prev === null) { prev = now; raf = requestAnimationFrame(tick); return; }
+        const dt = now - prev;
+        prev = now;
+
+        if (hovered) {
+          // Ease back to 0° along the shortest path
+          if (snapStart === null) { snapStart = now; snapFrom = angle; }
+          const dist = snapFrom > 180 ? 360 - snapFrom : snapFrom;
+          const dur  = Math.max(250, (dist / 360) * 1400);
+          const t    = Math.min(1, (now - snapStart) / dur);
+          if (snapFrom > 180) {
+            // go forward to 360 (= 0°)
+            angle = snapFrom + (360 - snapFrom) * easeOut(t);
+            if (angle >= 360) angle = 0;
+          } else {
+            // go backward to 0°
+            angle = snapFrom * (1 - easeOut(t));
+          }
+          img.style.transform = `rotate(${angle}deg)`;
+          raf = t < 1 ? requestAnimationFrame(tick) : null;
+          if (t >= 1) angle = 0;
+        } else {
+          // Spin — ease speed up from 0 to FULL_SPEED
+          speed += (FULL_SPEED - speed) * (1 - Math.exp(-ACCEL * dt));
+          angle  = (angle + speed * dt) % 360;
+          img.style.transform = `rotate(${angle}deg)`;
+          raf = requestAnimationFrame(tick);
+        }
+      }
+
+      if (window.matchMedia("(hover: hover)").matches) {
+        cell.addEventListener("mouseenter", () => {
+          hovered   = true;
+          snapStart = null;
+          speed     = 0;
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(tick);
+        });
+
+        cell.addEventListener("mouseleave", () => {
+          hovered = false;
+          speed   = 0;
+          prev    = null;
+          if (!raf) raf = requestAnimationFrame(tick);
+        });
+      }
+
+      raf = requestAnimationFrame(tick);
+    }
+
     function renderArchive() {
       const grid = document.getElementById("archive-grid");
       archiveCells = [];
@@ -1843,22 +1917,23 @@
       function loadNextArchiveItem() {
         if (gen !== archiveGen) return; // stale — a newer render started
         if (archMisses >= MAX_MISSES) {
-          // All images found — shuffle positions with a smooth CSS transition
-          for (let i = archiveCells.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [archiveCells[i], archiveCells[j]] = [archiveCells[j], archiveCells[i]];
-          }
-          // Cells are still opacity:0 here. Snap them to their shuffled positions
-          // with no transition, then enable transitions for future resizes,
-          // then cascade them in.
-          masonryLayout();
-          const grid = document.getElementById("archive-grid");
-          if (grid) {
-            // Force reflow so the snap takes effect before transitions are enabled.
-            void grid.offsetHeight;
-            grid.classList.add("layout-settled");
-          }
-          cascadeArchiveByColumn();
+          // All images revealed individually as they loaded. Once their
+          // cascade-in animations finish, shuffle to randomised positions
+          // using a smooth CSS position transition.
+          const snapGen = gen;
+          setTimeout(() => {
+            if (snapGen !== archiveGen || !archiveCells.length) return;
+            for (let i = archiveCells.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [archiveCells[i], archiveCells[j]] = [archiveCells[j], archiveCells[i]];
+            }
+            const grid = document.getElementById("archive-grid");
+            if (grid) {
+              grid.classList.add("layout-settled");
+              void grid.offsetHeight;
+              masonryLayout();
+            }
+          }, 600);
           return;
         }
 
@@ -1884,8 +1959,11 @@
           cell.appendChild(img);
           cell.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
           archiveCells.push(cell);
-          grid.appendChild(cell); // show immediately — no waiting for all images
-          masonryLayout();        // re-layout with the new cell in place
+          grid.appendChild(cell);
+          masonryLayout();
+          if (num === "06") { cell.classList.add("cd-spin"); initCdSpin(cell, img); }
+          cell.style.setProperty("--cascade-delay", "0ms");
+          cell.classList.add("cascade-in");
           loadNextArchiveItem();
         };
 
@@ -1920,6 +1998,8 @@
             archiveCells.push(cell);
             grid.appendChild(cell);
             masonryLayout();
+            cell.style.setProperty("--cascade-delay", "0ms");
+            cell.classList.add("cascade-in");
             loadNextArchiveItem();
           };
 

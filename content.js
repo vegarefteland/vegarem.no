@@ -77,16 +77,18 @@ const SITE = {
       color: "#F0EBE3",
       year: "2025",
       description:
-        "Coming Soon.",
+        "Personal branding project.",
     },
   ],
 
 
   /* ── Archive ────────────────────────────────────────────────────
+   * archiveIntro: text shown above the archive grid.
    * Archive images are loaded automatically from images/archive/
    * by numbering them 01, 02, 03 … (webp / jpg / jpeg / png / gif).
-   * You do not need to edit anything here for the archive.
    * ────────────────────────────────────────────────────────────── */
+  archiveIntro: "A mix of smaller projects, experiments and ideas.",
+
   archive: [],
 
 };
