@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "3456"],
       "port": 3456
+    },
+    {
+      "name": "moonlight",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "3457", "."],
+      "port": 3457
     }
   ]
 }

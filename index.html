@@ -216,11 +216,11 @@
       transition: opacity 160ms ease, transform 200ms var(--ease-out);
     }
 
-    /* ─── Skills wheel ───────────────────────────────────── */
+    /* ─── Skills wheel (home page only) ──────────────────── */
     .skills-wheel {
       position: absolute;
       inset: 0;
-      display: flex;
+      display: none; /* hidden by default — only enabled on home page via .is-home */
       align-items: flex-start;
       justify-content: center;
       overflow: hidden;
@@ -229,7 +229,8 @@
       /* hover-out: wheel exits immediately */
       transition: opacity 140ms ease;
     }
-    .nav-pill-center:hover .skills-wheel {
+    .nav-pill-center.is-home .skills-wheel { display: flex; }
+    .nav-pill-center.is-home:hover .skills-wheel {
       opacity: 1;
       /* hover-in: wheel fades in after name is gone */
       transition: opacity 200ms ease 140ms;
@@ -249,12 +250,39 @@
       line-height: 36px;
       display: block;
     }
-    .nav-pill-center:hover .skills-reel {
+    .nav-pill-center.is-home:hover .skills-reel {
       animation: skillsWheel 5s linear infinite;
     }
     @keyframes skillsWheel {
       from { transform: translateY(0); }
       to   { transform: translateY(-50%); }
+    }
+
+    /* ─── "Home" label (every page except home) ──────────── */
+    .home-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .nav-pill-center.is-home .home-label { display: none; }
+    .home-label span {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--fg);
+      transform: translateY(36px); /* sits below the pill, ready to slide up */
+      opacity: 0;
+      /* hover-out: slide back down before the name returns */
+      transition: opacity 140ms ease, transform 300ms var(--ease-out);
+    }
+    .nav-pill-center:hover .home-label span {
+      transform: translateY(0);
+      opacity: 1;
+      /* hover-in: slide up after the name has cleared */
+      transition: opacity 200ms ease 140ms, transform 320ms var(--ease-out) 140ms;
     }
 
     .nav-pill a {
@@ -542,12 +570,10 @@
                   0 2px 8px rgba(0, 0, 0, 0.30);
     }
 
-    /* Cascade by column — once all images are loaded and laid out, each column
-       streams in top-to-bottom, with later columns starting after earlier ones.
-       JS sets --cascade-delay per cell based on its column + row position. */
+    /* Per-image reveal — each cell slides up + fades in the moment its image
+       finishes loading. After the last one settles, masonry positions shuffle. */
     .archive-img.cascade-in {
       animation: cascadeIn 540ms var(--ease-out) both;
-      animation-delay: var(--cascade-delay, 0ms);
     }
     @keyframes cascadeIn {
       from { opacity: 0; transform: translateY(28px); filter: blur(2px); }
@@ -555,6 +581,9 @@
     }
     .archive-img.cd-spin img {
       border-radius: 50%;
+      /* JS drives transform every frame — disable the generic transform
+         transition so it doesn't fight the per-frame writes. */
+      transition: box-shadow 350ms var(--ease-out);
     }
 
     /* Project pages still use the old fade-up — defined here so the
@@ -1295,6 +1324,7 @@
           <span>Blender</span>
         </div>
       </div>
+      <div class="home-label" aria-hidden="true"><span>← Home</span></div>
     </div>
     <div class="nav-pill" id="nav-right"></div>
   </nav>
@@ -1686,6 +1716,7 @@
       centerPill.setAttribute("role", "button");
       centerPill.setAttribute("tabindex", "0");
       centerPill.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("home"); } };
+      centerPill.classList.toggle("is-home", currentPage === "home");
 
       const btn = document.createElement("button");
       btn.className = "theme-toggle";
@@ -1812,40 +1843,16 @@
       grid.style.height = Math.max(...colH) + "px";
     }
 
-    /* Stagger cells in column-by-column, top-to-bottom. Each column starts
-       slightly after the previous one, and items within a column step down
-       in sequence — like a waterfall flowing left-to-right. */
-    function cascadeArchiveByColumn() {
-      if (!archiveCells.length) return;
-      const COL_DELAY = 120; // ms between column starts
-      const ROW_DELAY = 70;  // ms between items inside a column
-
-      // Group cells by their `left` value (= column position from masonryLayout).
-      const byCol = new Map();
-      archiveCells.forEach(cell => {
-        const left = parseFloat(cell.style.left) || 0;
-        if (!byCol.has(left)) byCol.set(left, []);
-        byCol.get(left).push(cell);
-      });
-
-      // Sort columns left-to-right; within each, sort cells top-to-bottom.
-      const cols = [...byCol.entries()].sort((a, b) => a[0] - b[0]);
-      cols.forEach(([, cells], colIdx) => {
-        cells.sort((a, b) => (parseFloat(a.style.top) || 0) - (parseFloat(b.style.top) || 0));
-        cells.forEach((cell, rowIdx) => {
-          const delay = colIdx * COL_DELAY + rowIdx * ROW_DELAY;
-          cell.style.setProperty("--cascade-delay", delay + "ms");
-          cell.classList.add("cascade-in");
-        });
-      });
-    }
-
     function initCdSpin(cell, img) {
-      const FULL_SPEED = 360 / 8000; // deg/ms — one full rotation per 8 s
-      const ACCEL      = 0.003;      // exponential ease-in factor for spin-up
+      const FULL_SPEED  = 360 / 8000; // deg/ms — one full rotation per 8 s
+      const ACCEL       = 0.003;      // exponential ease for spin-up
+      const SCALE_HOVER = 0.96;       // matches the generic archive hover scale
+      const SCALE_EASE  = 0.008;      // exponential ease for scale changes
 
       let angle    = 0;
       let speed    = FULL_SPEED;
+      let scale    = 1;
+      let scaleTgt = 1;
       let prev     = null;
       let raf      = null;
       let hovered  = false;
@@ -1859,6 +1866,10 @@
         const dt = now - prev;
         prev = now;
 
+        // Scale eases independently of rotation, in both branches.
+        scale += (scaleTgt - scale) * (1 - Math.exp(-SCALE_EASE * dt));
+        const scaleSettled = Math.abs(scale - scaleTgt) < 0.001;
+
         if (hovered) {
           // Ease back to 0° along the shortest path
           if (snapStart === null) { snapStart = now; snapFrom = angle; }
@@ -1866,21 +1877,20 @@
           const dur  = Math.max(250, (dist / 360) * 1400);
           const t    = Math.min(1, (now - snapStart) / dur);
           if (snapFrom > 180) {
-            // go forward to 360 (= 0°)
             angle = snapFrom + (360 - snapFrom) * easeOut(t);
             if (angle >= 360) angle = 0;
           } else {
-            // go backward to 0°
             angle = snapFrom * (1 - easeOut(t));
           }
-          img.style.transform = `rotate(${angle}deg)`;
-          raf = t < 1 ? requestAnimationFrame(tick) : null;
+          img.style.transform = `rotate(${angle}deg) scale(${scale})`;
           if (t >= 1) angle = 0;
+          // Keep ticking until rotation AND scale have both settled
+          raf = (t >= 1 && scaleSettled) ? null : requestAnimationFrame(tick);
         } else {
           // Spin — ease speed up from 0 to FULL_SPEED
           speed += (FULL_SPEED - speed) * (1 - Math.exp(-ACCEL * dt));
           angle  = (angle + speed * dt) % 360;
-          img.style.transform = `rotate(${angle}deg)`;
+          img.style.transform = `rotate(${angle}deg) scale(${scale})`;
           raf = requestAnimationFrame(tick);
         }
       }
@@ -1890,14 +1900,17 @@
           hovered   = true;
           snapStart = null;
           speed     = 0;
+          scaleTgt  = SCALE_HOVER;
+          prev      = null;
           if (raf) cancelAnimationFrame(raf);
           raf = requestAnimationFrame(tick);
         });
 
         cell.addEventListener("mouseleave", () => {
-          hovered = false;
-          speed   = 0;
-          prev    = null;
+          hovered  = false;
+          speed    = 0;
+          scaleTgt = 1;
+          prev     = null;
           if (!raf) raf = requestAnimationFrame(tick);
         });
       }
@@ -1962,7 +1975,6 @@
           grid.appendChild(cell);
           masonryLayout();
           if (num === "06") { cell.classList.add("cd-spin"); initCdSpin(cell, img); }
-          cell.style.setProperty("--cascade-delay", "0ms");
           cell.classList.add("cascade-in");
           loadNextArchiveItem();
         };
@@ -1998,7 +2010,6 @@
             archiveCells.push(cell);
             grid.appendChild(cell);
             masonryLayout();
-            cell.style.setProperty("--cascade-delay", "0ms");
             cell.classList.add("cascade-in");
             loadNextArchiveItem();
           };
@@ -2014,6 +2025,40 @@
       }
 
       loadNextArchiveItem();
+    }
+
+    /* Warm the browser cache for archive images in the background so the page
+       opens instantly when the user clicks Archive. Runs once on initial load. */
+    let archivePreloaded = false;
+    function preloadArchiveImages() {
+      if (archivePreloaded) return;
+      archivePreloaded = true;
+      let i = 1;
+      let misses = 0;
+      const MAX_MISSES = 1;
+      const formats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
+
+      function next() {
+        if (misses >= MAX_MISSES) return;
+        const num = String(i++).padStart(2, "0");
+        let fmt = 0;
+        const probe = new Image();
+        probe.onload = () => { misses = 0; next(); };
+        probe.onerror = () => {
+          fmt++;
+          if (fmt < formats.length) {
+            probe.src = `images/archive/${num}${formats[fmt]}`;
+          } else {
+            // No image format matched — try .mp4 to cover archive videos
+            fetch(`images/archive/${num}.mp4`, { mode: "no-cors" })
+              .then(() => { misses = 0; next(); })
+              .catch(() => { misses++; next(); });
+          }
+        };
+        probe.src = `images/archive/${num}${formats[0]}`;
+      }
+
+      next();
     }
 
     // Re-layout on resize (debounced)
@@ -2323,6 +2368,11 @@
 
     restoreFromPath();
     renderNav();
+
+    // Warm archive image cache in the background (skip if already on archive)
+    if (currentPage !== "archive") {
+      setTimeout(preloadArchiveImages, 1200);
+    }
 
     /* ════════════════════════════════════════════════════════════════
      * INTRO SEQUENCE
