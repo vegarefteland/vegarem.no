@@ -19,7 +19,7 @@
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Critical: runs before first paint — theme + intro cover -->
   <style>
@@ -71,6 +71,13 @@
             root.style.setProperty("--tag-fg", navInk);
             root.style.setProperty("--tag-border", navInk === "#efefef"
               ? "rgba(255,255,255,0.25)" : "transparent");
+          }
+          if (c.font) {
+            root.style.setProperty("--font", c.font);
+            root.setAttribute("data-font",
+              c.font.indexOf("Instrument") >= 0  ? "instrument" :
+              c.font.indexOf("Inconsolata") >= 0 ? "inconsolata" :
+              c.font.indexOf("Comic") >= 0       ? "comic" : "inter");
           }
         }
       } catch (e) {}
@@ -686,11 +693,70 @@
     .customize-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     .customize-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
     .customize-row input[type="color"]::-moz-color-swatch { border: none; border-radius: 50%; }
-    /* Divider between the manual pickers and the preset palette */
-    .customize-presets-row {
+    /* Divider above the preset palette and font row */
+    .customize-presets-row,
+    .customize-fonts-row {
       border-top: 1px solid rgba(127, 127, 127, 0.22);
       padding-top: 12px;
       margin-top: 4px;
+    }
+    /* Font picker — each button previews its own font with "Aa" */
+    .customize-fonts {
+      display: flex;
+      gap: 6px;
+    }
+    .font-preset {
+      min-width: 26px;
+      height: 22px;
+      padding: 0 6px;
+      border: 1px solid currentColor;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--nav-fg);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 180ms ease, transform 180ms var(--ease-out);
+    }
+    .font-preset:hover { opacity: 0.75; transform: scale(1.06); }
+    .font-preset.active { opacity: 1; }
+    /* Serifs read smaller at the same font-size — bump the preview up */
+    .font-preset[data-font*="Instrument"] { font-size: 15px; }
+    /* In Instrument Serif, unify every weight to the CI-label weight (600).
+       Instrument Serif only has one weight from Google Fonts — the browser
+       synthesizes a faux-bold for a slightly denser, uniform look. */
+    [data-font="instrument"] body,
+    [data-font="instrument"] body * {
+      font-weight: 500 !important;
+      letter-spacing: 0.03em;
+    }
+    .font-preset:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(127, 127, 127, 0.4);
+    }
+    /* Hint at the bottom of the panel — explains how to leave custom mode */
+    .customize-note {
+      font-size: 10px;
+      color: var(--nav-fg);
+      opacity: 0.55;
+      text-align: center;
+      margin: 0;
+      padding-top: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      line-height: 1;
+    }
+    .customize-note-icon {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
     }
     /* Preset palette — small split-color swatches (bg + nav) */
     .customize-presets {
@@ -1462,7 +1528,7 @@
             <div class="customize-row customize-presets-row">
               <span class="customize-label">Presets</span>
               <div class="customize-presets">
-                <button class="preset" data-bg="#ffffff" data-nav="#ffffff" style="background: #ffffff;" aria-label="Paper"></button>
+                <button class="preset" data-bg="#ffffff" data-nav="#ebebeb" style="background: linear-gradient(135deg, #ffffff 50%, #ebebeb 50%);" aria-label="Paper"></button>
                 <button class="preset" data-bg="#ffffff" data-nav="#cde4ef" style="background: linear-gradient(135deg, #ffffff 50%, #cde4ef 50%);" aria-label="Sky"></button>
                 <button class="preset" data-bg="#ffffff" data-nav="#ead4e2" style="background: linear-gradient(135deg, #ffffff 50%, #ead4e2 50%);" aria-label="Blossom"></button>
                 <button class="preset" data-bg="#ffffff" data-nav="#9bb6c5" style="background: linear-gradient(135deg, #ffffff 50%, #9bb6c5 50%);" aria-label="Slate"></button>
@@ -1471,6 +1537,23 @@
                 <button class="preset" data-bg="#000000" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #000000 50%, #d9ff1a 50%);" aria-label="Neon"></button>
               </div>
             </div>
+            <div class="customize-row customize-fonts-row">
+              <span class="customize-label">Font</span>
+              <div class="customize-fonts">
+                <button class="font-preset" data-font="'Inter', system-ui, sans-serif" style="font-family: 'Inter', system-ui, sans-serif;" aria-label="Inter">Aa</button>
+                <button class="font-preset" data-font="'Instrument Serif', serif" style="font-family: 'Instrument Serif', serif;" aria-label="Instrument Serif">Aa</button>
+                <button class="font-preset" data-font="'Inconsolata', monospace" style="font-family: 'Inconsolata', monospace;" aria-label="Inconsolata">Aa</button>
+                <button class="font-preset" data-font="'Comic Sans MS', 'Chalkboard SE', cursive" style="font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;" aria-label="Comic Sans">Aa</button>
+              </div>
+            </div>
+            <p class="customize-note">
+              click the top left
+              <svg class="customize-note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
+                <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
+              </svg>
+              icon to reset
+            </p>
           </div>
         </span>
         Copyright ©2026 Vegar Efteland Melhus, All rights reserved
@@ -2523,7 +2606,7 @@
     function applyCustomColors() {
       const root = document.documentElement;
       // Always clear inline overrides first — they only belong in custom mode.
-      ["--bg","--fg","--nav-bg","--nav-fg","--tag-bg","--tag-fg","--tag-border"]
+      ["--bg","--fg","--nav-bg","--nav-fg","--tag-bg","--tag-fg","--tag-border","--font"]
         .forEach(p => root.style.removeProperty(p));
       if (root.getAttribute("data-theme") !== "custom") return;
       const stored = getCustomColors();
@@ -2542,11 +2625,25 @@
         root.style.setProperty("--tag-border", navInk === "#efefef"
           ? "rgba(255,255,255,0.25)" : "transparent");
       }
+      if (stored.font) {
+        root.style.setProperty("--font", stored.font);
+        // Tag the html element so we can apply font-specific style rules
+        root.setAttribute("data-font",
+          stored.font.includes("Instrument") ? "instrument" :
+          stored.font.includes("Inconsolata") ? "inconsolata" :
+          stored.font.includes("Comic")      ? "comic" : "inter");
+      } else {
+        root.removeAttribute("data-font");
+      }
       // Sync picker UI (default the swatches to white when nothing is stored)
       const bgInput  = document.getElementById("customize-bg-input");
       const navInput = document.getElementById("customize-nav-input");
       if (bgInput)  bgInput.value  = stored.bg  || "#ffffff";
       if (navInput) navInput.value = stored.nav || "#ffffff";
+      // Highlight the active font button
+      document.querySelectorAll(".font-preset").forEach(b => {
+        b.classList.toggle("active", b.getAttribute("data-font") === stored.font);
+      });
     }
 
     function enterCustomMode() {
@@ -2591,13 +2688,19 @@
 
       function positionPanel() {
         const rect = btn.getBoundingClientRect();
-        panel.style.left   = rect.left + "px";
+        const pw   = panel.offsetWidth;
+        // Centered horizontally on the button, clamped to the viewport edges
+        const left = Math.max(8, Math.min(
+          window.innerWidth - pw - 8,
+          rect.left + rect.width / 2 - pw / 2
+        ));
+        panel.style.left   = left + "px";
         panel.style.bottom = (window.innerHeight - rect.top + 8) + "px";
       }
 
       function openPanel()  {
+        panel.hidden = false;     // unhide first so offsetWidth is measurable
         positionPanel();
-        panel.hidden = false;
         btn.setAttribute("aria-expanded", "true");
       }
       function closePanel() {
@@ -2626,17 +2729,30 @@
         if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
       });
 
-      // Reposition / close as the viewport changes
-      window.addEventListener("scroll", () => { if (!panel.hidden) closePanel(); }, { passive: true });
+      // Reposition as the viewport changes (font swaps reflow the page,
+      // which fires scroll — repositioning keeps the panel anchored to the button)
+      window.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true });
       window.addEventListener("resize", () => { if (!panel.hidden) positionPanel(); });
 
       bgInput.addEventListener("input",  e => saveColor("bg",  e.target.value));
       navInput.addEventListener("input", e => saveColor("nav", e.target.value));
 
-      // Preset palette — one-click apply both bg + nav colors
+      // Preset palette — one-click apply both bg + nav colors (preserves font)
       panel.querySelectorAll(".preset").forEach(p => {
         p.addEventListener("click", () => {
-          const data = { bg: p.getAttribute("data-bg"), nav: p.getAttribute("data-nav") };
+          const data = getCustomColors();
+          data.bg  = p.getAttribute("data-bg");
+          data.nav = p.getAttribute("data-nav");
+          try { localStorage.setItem("customColors", JSON.stringify(data)); } catch (e) {}
+          applyCustomColors();
+        });
+      });
+
+      // Font picker — swap the global --font (preserves colors)
+      panel.querySelectorAll(".font-preset").forEach(p => {
+        p.addEventListener("click", () => {
+          const data = getCustomColors();
+          data.font = p.getAttribute("data-font");
           try { localStorage.setItem("customColors", JSON.stringify(data)); } catch (e) {}
           applyCustomColors();
         });
