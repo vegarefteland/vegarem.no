@@ -583,6 +583,7 @@
     }
     @media (max-width: 860px) { .customize-wrap { display: none; } }
     .customize-btn {
+      position: relative;
       background: var(--tag-bg);
       color: var(--tag-fg);
       border: 1px solid var(--tag-border);
@@ -592,6 +593,7 @@
       font-weight: 500;
       font-family: var(--font);
       cursor: pointer;
+      overflow: hidden; /* clips the sweep to the pill shape */
       transition: opacity 180ms ease;
       display: inline-flex;
       align-items: center;
@@ -599,6 +601,28 @@
     }
     .customize-btn:hover { opacity: 0.75; }
     .customize-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+    /* Light sweep — same diagonal highlight as the Focus button, but slower
+       sweep stroke and a stronger highlight for a more visible shimmer */
+    .customize-btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 20%,
+        rgba(255, 255, 255, 0.5) 50%,
+        transparent 80%
+      );
+      transform: translateX(-150%);
+      animation: customizeSweep 2s linear infinite;
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    @keyframes customizeSweep {
+      0%   { transform: translateX(-150%); }
+      35%  { transform: translateX(150%); }
+      100% { transform: translateX(150%); }
+    }
     .customize-panel {
       position: fixed;
       /* `bottom` and `left` set by JS — anchored above the Customize button.
