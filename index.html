@@ -1442,7 +1442,7 @@
                 <button class="preset" data-bg="#ffffff" data-nav="#cde4ef" style="background: linear-gradient(135deg, #ffffff 50%, #cde4ef 50%);" aria-label="Sky"></button>
                 <button class="preset" data-bg="#ffffff" data-nav="#ead4e2" style="background: linear-gradient(135deg, #ffffff 50%, #ead4e2 50%);" aria-label="Blossom"></button>
                 <button class="preset" data-bg="#ffffff" data-nav="#9bb6c5" style="background: linear-gradient(135deg, #ffffff 50%, #9bb6c5 50%);" aria-label="Slate"></button>
-                <button class="preset" data-bg="#ffffff" data-nav="#d4ed52" style="background: linear-gradient(135deg, #ffffff 50%, #d4ed52 50%);" aria-label="Citrus"></button>
+                <button class="preset" data-bg="#ffffff" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #ffffff 50%, #d9ff1a 50%);" aria-label="Citrus"></button>
                 <button class="preset" data-bg="#000000" data-nav="#000000" style="background: #000000;" aria-label="Midnight"></button>
                 <button class="preset" data-bg="#000000" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #000000 50%, #d9ff1a 50%);" aria-label="Neon"></button>
               </div>
@@ -2479,8 +2479,6 @@
      * button swaps to a paintbrush icon — clicking it exits custom mode
      * and returns to the previous theme.
      * ════════════════════════════════════════════════════════════════ */
-    const CUSTOM_DEFAULT = { bg: "#ffffff", nav: "#d9ff1a" };
-
     function getCustomColors() {
       try { return JSON.parse(localStorage.getItem("customColors") || "{}"); }
       catch (e) { return {}; }
@@ -2505,25 +2503,26 @@
         .forEach(p => root.style.removeProperty(p));
       if (root.getAttribute("data-theme") !== "custom") return;
       const stored = getCustomColors();
-      const bg  = stored.bg  || CUSTOM_DEFAULT.bg;
-      const nav = stored.nav || CUSTOM_DEFAULT.nav;
-      const navInk = inkFor(nav);
-      root.style.setProperty("--bg", bg);
-      root.style.setProperty("--fg", inkFor(bg));
-      // Nav pill (semi-transparent for the blurred floating UI)
-      root.style.setProperty("--nav-bg", hexToRgba(nav, 0.88));
-      root.style.setProperty("--nav-fg", navInk);
-      // All other pills (.section-tag, .project-label, .focus-btn, etc.)
-      // share the nav color so the whole pill system stays consistent.
-      root.style.setProperty("--tag-bg", nav);
-      root.style.setProperty("--tag-fg", navInk);
-      root.style.setProperty("--tag-border", navInk === "#efefef"
-        ? "rgba(255,255,255,0.25)" : "transparent");
-      // Sync picker UI
+      // No stored colors → fall back to the [data-theme="custom"] CSS defaults.
+      // User picks a preset or uses the swatches to set colors.
+      if (stored.bg) {
+        root.style.setProperty("--bg", stored.bg);
+        root.style.setProperty("--fg", inkFor(stored.bg));
+      }
+      if (stored.nav) {
+        const navInk = inkFor(stored.nav);
+        root.style.setProperty("--nav-bg", hexToRgba(stored.nav, 0.88));
+        root.style.setProperty("--nav-fg", navInk);
+        root.style.setProperty("--tag-bg", stored.nav);
+        root.style.setProperty("--tag-fg", navInk);
+        root.style.setProperty("--tag-border", navInk === "#efefef"
+          ? "rgba(255,255,255,0.25)" : "transparent");
+      }
+      // Sync picker UI (default the swatches to white when nothing is stored)
       const bgInput  = document.getElementById("customize-bg-input");
       const navInput = document.getElementById("customize-nav-input");
-      if (bgInput)  bgInput.value  = bg;
-      if (navInput) navInput.value = nav;
+      if (bgInput)  bgInput.value  = stored.bg  || "#ffffff";
+      if (navInput) navInput.value = stored.nav || "#ffffff";
     }
 
     function enterCustomMode() {
@@ -2532,11 +2531,6 @@
       if (prev !== "custom") {
         // Remember what to return to when the user exits
         try { localStorage.setItem("themeBeforeCustom", prev); } catch (e) {}
-        // First-time entry: seed with the default custom palette (white + lime)
-        const stored = getCustomColors();
-        if (!stored.bg && !stored.nav) {
-          try { localStorage.setItem("customColors", JSON.stringify(CUSTOM_DEFAULT)); } catch (e) {}
-        }
       }
       root.setAttribute("data-theme", "custom");
       try { localStorage.setItem("theme", "custom"); } catch (e) {}
