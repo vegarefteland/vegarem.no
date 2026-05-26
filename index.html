@@ -94,6 +94,24 @@
     img { display: block; }
     a { text-decoration: none; }
 
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 16px;
+      z-index: 99999;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: top 200ms ease;
+    }
+    .skip-link:focus {
+      top: 16px;
+    }
+
     /* ─── Tokens ─────────────────────────────────────────────── */
     :root {
       --bg:         #ffffff;
@@ -1418,6 +1436,8 @@
 
 <body>
 
+  <a class="skip-link" href="#page-home">Skip to content</a>
+
   <!-- ══ INTRO SEQUENCE ══════════════════════════════════════════ -->
   <div id="intro" aria-hidden="true" role="presentation">
     <div id="intro-group">
@@ -1493,7 +1513,7 @@
           </div>
           <div class="contact-item">
             <p class="ci-label">Instagram</p>
-            <a href="https://instagram.com" target="_blank" rel="noopener">@vegar.efteland<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <a href="https://instagram.com/vegar.efteland" target="_blank" rel="noopener">@vegar.efteland<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
           <div class="contact-item">
             <p class="ci-label">LinkedIn</p>
@@ -1557,7 +1577,14 @@
           </div>
         </span>
         www.vegarem.no
-        <span style="margin-left: 16px; opacity: 0.4;">v2.0</span>
+        <svg aria-label="VEM" height="14" viewBox="0 0 912.43 345.11" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;fill:currentColor;opacity:0.25;margin:0 8px 0 12px;">
+          <path fill-rule="evenodd" d="M296.15,0H33.05C8.84,0-7.13,25.19,3.19,47.08l131.55,279.07c11.9,25.24,47.81,25.24,59.71,0L326.01,47.08c10.32-21.89-5.65-47.08-29.86-47.08Z"/>
+          <path fill-rule="evenodd" d="M561.1,38.94c0-21.42-17.36-38.78-38.78-38.78h-126.25v.03c-12.09-.15-24.24,6.14-30.27,18.9l-131.57,278.91c-10.33,21.89,5.64,47.09,29.85,47.09h263.13c18.08,0,31.55-14.06,32.92-30.29.61-2.74.96-5.57.96-8.49V38.94Z"/>
+          <rect x="583.18" y=".18" width="329.25" height="344.93" rx="38.78" ry="38.78"/>
+          <circle cx="43.2" cy="301.88" r="43.2"/>
+        </svg>
+        <a href="https://github.com/vegarefteland/vegarem.no" target="_blank" rel="noopener" style="display:inline-block;vertical-align:middle;color:inherit;margin-right:12px;opacity:0.25;transition:opacity 180ms ease;line-height:0;" aria-label="GitHub"><svg height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
+        <span style="opacity: 0.4;">v2.0</span>
       </footer>
 
     </div>
@@ -2254,6 +2281,7 @@
       function loadNextArchiveItem() {
         if (gen !== archiveGen) return; // stale — a newer render started
         if (archMisses >= MAX_MISSES) {
+          lbLoadingActive = false;
           // All images revealed individually as they loaded. Once their
           // cascade-in animations finish, shuffle to randomised positions
           // using a smooth CSS position transition.
@@ -2297,7 +2325,7 @@
           cell.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
           archiveCells.push(cell);
           grid.appendChild(cell);
-          masonryLayout();
+          scheduleMasonry();
           if (num === "06") { cell.classList.add("cd-spin"); initCdSpin(cell, img); }
           cell.classList.add("cascade-in");
           loadNextArchiveItem();
@@ -2333,7 +2361,7 @@
             cell.addEventListener("click", () => openLightbox(video.src, "#1a1a1a"));
             archiveCells.push(cell);
             grid.appendChild(cell);
-            masonryLayout();
+            scheduleMasonry();
             cell.classList.add("cascade-in");
             loadNextArchiveItem();
           };
@@ -2374,8 +2402,8 @@
             probe.src = `images/archive/${num}${formats[fmt]}`;
           } else {
             // No image format matched — try .mp4 to cover archive videos
-            fetch(`images/archive/${num}.mp4`, { mode: "no-cors" })
-              .then(() => { misses = 0; next(); })
+            fetch(`images/archive/${num}.mp4`)
+              .then(r => { if (r.ok) { misses = 0; } else { misses++; } next(); })
               .catch(() => { misses++; next(); });
           }
         };
@@ -2383,6 +2411,13 @@
       }
 
       next();
+    }
+
+    let masonryRaf = null;
+    function scheduleMasonry() {
+      if (!masonryRaf) {
+        masonryRaf = requestAnimationFrame(() => { masonryRaf = null; masonryLayout(); });
+      }
     }
 
     // Re-layout on resize (debounced)
@@ -2395,6 +2430,19 @@
     /* ════════════════════════════════════════════════════════════════
      * LIGHTBOX
      * ════════════════════════════════════════════════════════════════ */
+    function trapFocus(container, e) {
+      if (e.key !== "Tab") return;
+      const focusable = container.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    }
+
     const lightbox      = document.getElementById("lightbox");
     const lightboxImg   = document.getElementById("lightbox-img");
     const lightboxClose = document.getElementById("lightbox-close");
@@ -2564,6 +2612,7 @@
       if (e.key === "Escape")     closeLightbox();
       if (e.key === "ArrowLeft")  lbGoPrev();
       if (e.key === "ArrowRight") lbGoNext();
+      trapFocus(lightbox, e);
     });
 
     /* ════════════════════════════════════════════════════════════════
@@ -2858,11 +2907,10 @@
       if (e.target.closest("#focus-btn")) openFocusMode();
     });
 
-    // ESC to close
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape" && focusOverlay.classList.contains("open")) {
-        closeFocusMode();
-      }
+      if (!focusOverlay.classList.contains("open")) return;
+      if (e.key === "Escape") closeFocusMode();
+      trapFocus(focusOverlay, e);
     });
 
     /* ════════════════════════════════════════════════════════════════
