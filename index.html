@@ -19,10 +19,23 @@
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Critical: runs before first paint — theme + intro cover -->
   <style>
+    @font-face {
+      font-family: 'Alte Haas Grotesk';
+      src: url('Fonts/AlteHaasGroteskRegular.ttf') format('truetype');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Alte Haas Grotesk';
+      src: url('Fonts/AlteHaasGroteskBold.ttf') format('truetype');
+      font-weight: 700;
+      font-display: swap;
+    }
+
     /* Dark is the default; light/custom only apply when the user opts in.
        For custom mode we use var(--bg) so the JS-set color wins (the
        critical script in <head> sets --bg inline before first paint). */
@@ -75,7 +88,7 @@
           if (c.font) {
             root.style.setProperty("--font", c.font);
             root.setAttribute("data-font",
-              c.font.indexOf("Instrument") >= 0  ? "instrument" :
+              c.font.indexOf("Alte Haas") >= 0  ? "altehaas" :
               c.font.indexOf("Inconsolata") >= 0 ? "inconsolata" :
               c.font.indexOf("Comic") >= 0       ? "comic" : "inter");
           }
@@ -91,7 +104,7 @@
     /* ─── Reset ─────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-    img { display: block; }
+    img, video { display: block; }
     a { text-decoration: none; }
 
     .skip-link {
@@ -442,16 +455,19 @@
       to   { background-position:  120% 0; }
     }
 
-    .project-card img {
+    .project-card img,
+    .project-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       opacity: 0;
       transition: transform 550ms var(--ease-out), opacity 380ms ease;
     }
-    .project-card.loaded img { opacity: 1; }
+    .project-card.loaded img,
+    .project-card.loaded video { opacity: 1; }
 
-    .project-card:hover img {
+    .project-card:hover img,
+    .project-card:hover video {
       transform: scale(1.04);
     }
 
@@ -744,13 +760,10 @@
     .font-preset:hover { opacity: 0.75; transform: scale(1.06); }
     .font-preset.active { opacity: 1; }
     /* Serifs read smaller at the same font-size — bump the preview up */
-    .font-preset[data-font*="Instrument"] { font-size: 15px; }
-    /* In Instrument Serif, unify every weight to the CI-label weight (600).
-       Instrument Serif only has one weight from Google Fonts — the browser
-       synthesizes a faux-bold for a slightly denser, uniform look. */
-    [data-font="instrument"] body,
-    [data-font="instrument"] body * {
-      font-weight: 500 !important;
+    .font-preset[data-font*="Alte Haas"] { font-size: 15px; }
+    /* Alte Haas Grotesk: uppercase with italic pills. */
+    [data-font="altehaas"] body,
+    [data-font="altehaas"] body * {
       letter-spacing: 0.03em;
     }
     .font-preset:focus-visible {
@@ -877,6 +890,12 @@
     @keyframes archiveIn {
       from { opacity: 0; transform: translateY(24px) scale(0.95); filter: blur(4px); }
       to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0px); }
+    }
+
+    /* Project image reveal — slow, smooth rise */
+    @keyframes projectReveal {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     /* ─── About page — staggered children ───────────────────────── */
@@ -1014,7 +1033,7 @@
     /* ─── Project Detail Page ────────────────────────────────── */
     .project-layout {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 400px 1fr;
       gap: 40px;
       align-items: start;
     }
@@ -1030,6 +1049,67 @@
 
     /* Row of pills (Description + optional Year) — auto-sized to text,
        wraps to a second line on very narrow screens. */
+    /* WIP / Coming Soon page */
+    .wip-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      gap: 12px;
+      text-align: center;
+    }
+    .wip-page > * {
+      opacity: 0;
+      animation: contentIn 400ms var(--ease-out) both;
+    }
+    .wip-page > *:nth-child(1) { animation-delay: 140ms; }
+    .wip-page > *:nth-child(2) { animation-delay: 210ms; }
+
+    .wip-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 4px 12px 4px 10px;
+      border-radius: 100px;
+      user-select: none;
+    }
+    .wip-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.55;
+      flex-shrink: 0;
+      animation: wipPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes wipPulse {
+      0%, 100% { opacity: 0.55; transform: scale(1); }
+      50%      { opacity: 1;    transform: scale(1.4); }
+    }
+    .wip-message {
+      font-size: 13.5px;
+      color: var(--muted);
+    }
+    .wip-cursor {
+      display: inline-block;
+      width: 1px;
+      height: 0.8em;
+      background: var(--muted);
+      margin-left: 2px;
+      vertical-align: middle;
+      border-radius: 1px;
+      animation: wipBlink 0.8s ease infinite;
+    }
+    @keyframes wipBlink {
+      0%, 40%  { opacity: 1; }
+      60%, 100% { opacity: 0; }
+    }
+
     .section-tags-row {
       display: flex;
       flex-wrap: wrap;
@@ -1042,19 +1122,34 @@
 
     .project-desc {
       font-size: 15px;
-      line-height: 1.75;
+      line-height: 1.35;
       color: var(--fg);
     }
 
     .project-desc p + p {
-      margin-top: 14px;
+      margin-top: 18px;
+    }
+
+    /* Secondary paragraphs — muted "tools/note" style */
+    .project-desc .desc-note {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-top: 20px;
+    }
+
+    /* Divider between description sections */
+    .project-desc .desc-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 20px 0;
     }
 
     .project-right {
       display: flex;
       flex-direction: column;
       gap: var(--gap);
-      padding-right: 80px;
+      padding-right: 16px;
     }
 
     .project-hero {
@@ -1063,6 +1158,8 @@
       border-radius: 6px;
       overflow: hidden;
       opacity: 0;
+      transform: translateY(50px);
+      will-change: opacity, transform;
     }
 
     .project-img-item {
@@ -1070,12 +1167,20 @@
       border-radius: 6px;
       overflow: hidden;
       opacity: 0;
+      transform: translateY(50px);
+      will-change: opacity, transform;
     }
 
-    .project-hero.loaded,
-    .project-img-item.loaded {
-      animation: archiveIn 350ms var(--ease-out) both;
+    .project-hero.revealed,
+    .project-img-item.revealed {
+      animation: projectReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
+
+    @keyframes projectReveal {
+      from { opacity: 0; transform: translateY(50px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
 
 
     .project-img-grid {
@@ -1085,13 +1190,11 @@
       align-items: start;
     }
 
-    /* Subfolder inline grid row — auto-fits however many images are in the folder
-       (1 image = full width, 2 = side by side, 3 = three columns, etc.) */
+    /* Subfolder inline grid row — columns sized by image aspect ratio
+       so all images sit at the same height without cropping. */
     .project-row-grid {
       display: grid;
-      grid-template-columns: repeat(var(--row-cols, 2), 1fr);
       gap: var(--gap);
-      align-items: start;
     }
 
 
@@ -1461,7 +1564,6 @@
     <div class="about-wrap">
 
       <span class="section-tag">About</span>
-      <!-- ↓ Edit your bio here ↓ -->
       <p class="about-bio">
         I'm Vegar (20), a first-year Design & Visual Communication student at the University of Bergen.
       </p>
@@ -1470,10 +1572,8 @@
 
       <div class="section-block">
         <span class="section-tag">Currently</span>
-        <!-- ↓ Edit current role ↓ -->
         <div class="entry">
-          <span class="entry-name">BA – Design & Visual Communication<br>University of Bergen
-          </span>
+          <span class="entry-name">BA – Design & Visual Communication<br>University of Bergen</span>
         </div>
       </div>
 
@@ -1482,7 +1582,6 @@
       <div class="skills-row">
         <div class="section-block">
           <span class="section-tag">Software</span>
-          <!-- ↓ Edit software ↓ -->
           <div class="entry"><span class="entry-name">Photoshop</span></div>
           <div class="entry"><span class="entry-name">Illustrator</span></div>
           <div class="entry"><span class="entry-name">InDesign</span></div>
@@ -1493,7 +1592,6 @@
 
         <div class="section-block">
           <span class="section-tag">Skills</span>
-          <!-- ↓ Edit skills ↓ -->
           <div class="entry"><span class="entry-name">Graphic Design</span></div>
           <div class="entry"><span class="entry-name">Motion Graphics</span></div>
           <div class="entry"><span class="entry-name">3D Modeling</span></div>
@@ -1505,7 +1603,6 @@
 
       <div class="section-block">
         <span class="section-tag">Contact</span>
-        <!-- ↓ Edit contact info ↓ -->
         <div class="contact-grid">
           <div class="contact-item">
             <p class="ci-label">Mail</p>
@@ -1527,7 +1624,6 @@
       </div>
 
       <footer class="about-footer">
-        <!-- ↓ Edit footer ↓ -->
         <span class="customize-wrap">
           <button class="customize-btn" id="customize-btn" aria-label="Customize colors" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1555,15 +1651,6 @@
                 <button class="preset" data-bg="#ffffff" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #ffffff 50%, #d9ff1a 50%);" aria-label="Citrus"></button>
                 <button class="preset" data-bg="#000000" data-nav="#000000" style="background: #000000;" aria-label="Midnight"></button>
                 <button class="preset" data-bg="#000000" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #000000 50%, #d9ff1a 50%);" aria-label="Neon"></button>
-              </div>
-            </div>
-            <div class="customize-row customize-fonts-row">
-              <span class="customize-label">Font</span>
-              <div class="customize-fonts">
-                <button class="font-preset" data-font="'Inter', system-ui, sans-serif" style="font-family: 'Inter', system-ui, sans-serif;" aria-label="Inter">Aa</button>
-                <button class="font-preset" data-font="'Instrument Serif', serif" style="font-family: 'Instrument Serif', serif;" aria-label="Instrument Serif">Aa</button>
-                <button class="font-preset" data-font="'Inconsolata', monospace" style="font-family: 'Inconsolata', monospace;" aria-label="Inconsolata">Aa</button>
-                <button class="font-preset" data-font="'Comic Sans MS', 'Chalkboard SE', cursive" style="font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;" aria-label="Comic Sans">Aa</button>
               </div>
             </div>
             <p class="customize-note">
@@ -1681,6 +1768,7 @@
      * ════════════════════════════════════════════════════════════════ */
     let currentPage    = "home";
     let currentProject = null;
+    let projRevealObs  = null;   // IntersectionObserver for project image reveal
 
     function showPage(pageId) {
       const old = document.getElementById("page-" + currentPage);
@@ -1694,6 +1782,15 @@
       next.style.display = "";
       void next.offsetWidth;
       next.classList.add("active");
+
+      // Restart cover videos on the home grid
+      if (pageId === "home") {
+        next.querySelectorAll(".project-card video").forEach(v => {
+          v.currentTime = 0;
+          v.muted = true;
+          v.play().catch(() => {});
+        });
+      }
 
       // Re-render archive fresh each visit so shuffle + masonry are correct
       if (pageId === "archive") {
@@ -1750,6 +1847,49 @@
     function renderProjectPage(project) {
       const page = document.getElementById("page-project");
 
+      // Tear down old observer
+      if (projRevealObs) { projRevealObs.disconnect(); projRevealObs = null; }
+
+      // Observe loaded project images: reveal them when they scroll into view.
+      // Groups entering together get a staggered delay for a cascading effect.
+      let revealIndex = 0;
+      let revealBatch = 0;        // counts items revealed in the same observer frame
+      let revealFrame  = -1;
+      projRevealObs = new IntersectionObserver((entries) => {
+        // Reset batch counter each new observer callback
+        const frame = performance.now();
+        if (frame - revealFrame > 50) revealBatch = 0;
+        revealFrame = frame;
+
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target;
+          projRevealObs.unobserve(el);
+          const delay = revealBatch * 150;          // 150ms stagger per image
+          if (delay) el.style.animationDelay = delay + "ms";
+          // Force a layout read before adding the class so the browser
+          // registers the starting state and actually transitions.
+          void el.offsetHeight;
+          el.classList.add("revealed");
+          revealBatch++;
+        });
+      }, { rootMargin: "0px 0px", threshold: 0.05 });
+
+      // WIP projects show a "Coming soon" page instead of content
+      // Detected by folder name starting with "WIP_" (e.g. "WIP_02")
+      if (project.wip || /^WIP_/i.test(project.folder)) {
+        page.innerHTML = `
+          <div class="wip-page">
+            <span class="wip-tag">
+              <span class="wip-dot"></span>
+              Check back soon
+            </span>
+            <p class="wip-message">This page is under construction<span class="wip-cursor"></span></p>
+          </div>
+        `;
+        return;
+      }
+
       // Build description paragraphs
       const paragraphs = project.description
         .split("\n")
@@ -1773,7 +1913,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
               </button>
             </div>
-            <div class="project-desc">${paragraphs}</div>
+            <div class="project-desc" data-nosnippet>${paragraphs}</div>
           </div>
           <div class="project-right" id="project-right"></div>
         </div>
@@ -1853,6 +1993,8 @@
           img.onload = () => {
             projMisses = 0;
             item.classList.add("loaded");
+            item.dataset.revealIdx = revealIndex++;
+            if (projRevealObs) projRevealObs.observe(item);
             item.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
             loadNextProjectItem();
           };
@@ -1874,6 +2016,8 @@
         video.addEventListener("canplay", () => {
           projMisses = 0;
           item.classList.add("loaded");
+          item.dataset.revealIdx = revealIndex++;
+          if (projRevealObs) projRevealObs.observe(item);
           // Only show audio controls for _player videos
           if (videoAttempt === 0) {
             muteBtn.style.display = "";
@@ -1992,6 +2136,8 @@
 
         let subIdx = 1; // firstImg is already loaded (01.*); start probing from 02
 
+        const ratios = [];   // aspect ratios for each image in this row
+
         function addSubItem(img) {
           const item = document.createElement("div");
           item.className = "project-img-item";
@@ -2000,10 +2146,13 @@
           img.decoding = "async";
           item.appendChild(img);
           item.classList.add("loaded");
+          item.dataset.revealIdx = revealIndex++;
           item.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
           rowGrid.appendChild(item);
-          // Update column count so CSS grid reflects the actual number of items
-          rowGrid.style.setProperty("--row-cols", rowGrid.children.length);
+          if (projRevealObs) projRevealObs.observe(item);
+          // Size columns by aspect ratio so all images share the same height
+          ratios.push(img.naturalWidth / img.naturalHeight);
+          rowGrid.style.gridTemplateColumns = ratios.map(r => r + "fr").join(" ");
         }
 
         function loadNextSubItem() {
@@ -2126,22 +2275,45 @@
           <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`;
 
-        const img = document.createElement("img");
-        img.src = project.cover;
-        img.alt = project.title;
-        img.loading = "lazy";
-        img.decoding = "async";
-        img.width = 800;
-        img.height = 600;
-        img.onload = () => card.classList.add("loaded");
-        img.onerror = function () {
-          this.style.display = "none";
-          card.classList.add("loaded"); // stop the shimmer even on error
-        };
-        // Cached images may already be complete by this point — handle that
-        if (img.complete && img.naturalWidth > 0) card.classList.add("loaded");
+        const isVideo = /\.(mp4|webm|mov)$/i.test(project.cover);
+        let media;
 
-        card.appendChild(img);
+        if (isVideo) {
+          media = document.createElement("video");
+          media.autoplay = true;
+          media.muted = true;
+          media.defaultMuted = true;
+          media.loop = true;
+          media.playsInline = true;
+          media.setAttribute("playsinline", "");
+          media.setAttribute("preload", "auto");
+          media.addEventListener("loadeddata", () => {
+            card.classList.add("loaded");
+            media.play().catch(() => {});
+          }, { once: true });
+          media.onerror = function () {
+            this.style.display = "none";
+            card.classList.add("loaded");
+          };
+          media.src = project.cover;
+          media.load();
+        } else {
+          media = document.createElement("img");
+          media.src = project.cover;
+          media.alt = project.title;
+          media.loading = "lazy";
+          media.decoding = "async";
+          media.width = 800;
+          media.height = 600;
+          media.onload = () => card.classList.add("loaded");
+          media.onerror = function () {
+            this.style.display = "none";
+            card.classList.add("loaded");
+          };
+          if (media.complete && media.naturalWidth > 0) card.classList.add("loaded");
+        }
+
+        card.appendChild(media);
         card.appendChild(label);
         card.appendChild(arrow);
 
@@ -2678,7 +2850,7 @@
         root.style.setProperty("--font", stored.font);
         // Tag the html element so we can apply font-specific style rules
         root.setAttribute("data-font",
-          stored.font.includes("Instrument") ? "instrument" :
+          stored.font.includes("Alte Haas") ? "altehaas" :
           stored.font.includes("Inconsolata") ? "inconsolata" :
           stored.font.includes("Comic")      ? "comic" : "inter");
       } else {
@@ -2862,7 +3034,12 @@
 
           const grid = document.createElement("div");
           grid.className = "focus-grid-row";
-          grid.style.setProperty("--fcols", cols);
+          // Copy aspect-ratio columns from the source row grid if set
+          if (child.classList.contains("project-row-grid") && child.style.gridTemplateColumns) {
+            grid.style.gridTemplateColumns = child.style.gridTemplateColumns;
+          } else {
+            grid.style.setProperty("--fcols", cols);
+          }
           mediaEls.forEach(el => grid.appendChild(cloneMedia(el)));
           item.appendChild(grid);
 

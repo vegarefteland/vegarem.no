@@ -4,3 +4,5 @@ Fonts/commit-mono-main/
 *.swp
 *~
 Thumbs.db
+_originals/
+*_original.*

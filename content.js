@@ -23,26 +23,36 @@ const SITE = {
       folder: "01",
       cover: "images/projects/01/cover.webp",
       color: "#C8B8A2",
+      wip: false,
       year: "2025–2026",
       description:
         "Ongoing personal project.\n\n" +
         "Designing retro inspired formula 1 merch for every team on the grid.",
     },
     {
-      title: "F1 – Track Merch",
+      title: "Arboretet – Visual Identity",
       folder: "02",
-      cover: "images/projects/02/cover.webp",
+      cover: "images/projects/02/cover.mp4",
       color: "#1C1C1E",
-      year: "2024-2026",
+      wip: true,
+      year: "2026",
       description:
-        "Ongoing personal project.\n\n" +
-        "Designing merch for every track on the calendar.",
+        "<strong>Student Project in collaboration with:</strong>\n\n" +
+        "Dorthea Førland Solem<br>" +
+        "Olga Nørager-Nielsen<br>" +
+        "Sofiia Kundriutskova\n\n" +
+        "<strong>Client:</strong>\n" +
+        "Arboretet i Bergen is a botanical garden located at Milde, just south of Bergen, Norway. Spanning over 300 acres, it houses one of the largest collections of trees, shrubs, and plants in Scandinavia.\n\n" +
+        "<strong>Concept:</strong>\n" +
+"Over six weeks, the project moved through market positioning research, analysis of long-term ambitions and values, target audience mapping, concept development, design strategy, and the final visual identity itself.\n\n" +
+        "The concept explores how one can control the uncontrollable. By this we mean finding systems within chaos and exploring how chaos can be used as an effect to spark curiosity. Controlling the uncontrollable plays on how the plants at \"Arboretet\" are wild, yet do not grow naturally in the area. \"Arboretet\" is a curated, living museum even though it does not appear that way at first glance.",
     },
     {
       title: "Poster Design",
       folder: "03",
       cover: "images/projects/03/cover.webp",
       color: "#E8E0D5",
+      wip: false,
       layout: "grid",
       year: "2023–2026",
       description:
@@ -54,6 +64,7 @@ const SITE = {
       folder: "04",
       cover: "images/projects/04/cover.webp",
       color: "#3D4A5C",
+      wip: false,
       year: "2026",
       description:
         "Modular Desk Interface concept. Inspired by the design language of Braun and Teenage Engineering. " +
@@ -65,6 +76,7 @@ const SITE = {
       folder: "05",
       cover: "images/projects/05/cover.webp",
       color: "#D4C5B0",
+      wip: false,
       year: "2026",
       description:
         "Promotional showcase video highlighting motion and design work.\n\n" +
@@ -75,6 +87,7 @@ const SITE = {
       folder: "06",
       cover: "images/projects/06/cover.webp",
       color: "#F0EBE3",
+      wip: false,
       year: "2025",
       description:
         "Personal branding project.",
@@ -88,7 +101,5 @@ const SITE = {
    * by numbering them 01, 02, 03 … (webp / jpg / jpeg / png / gif).
    * ────────────────────────────────────────────────────────────── */
   archiveIntro: " ",
-
-  archive: [],
 
 };
