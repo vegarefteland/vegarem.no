@@ -19,7 +19,7 @@
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Critical: runs before first paint — theme + intro cover -->
   <style>
@@ -85,12 +85,11 @@
             root.style.setProperty("--tag-border", navInk === "#efefef"
               ? "rgba(255,255,255,0.25)" : "transparent");
           }
+          // Font picker removed — always use Arimo.
+          // Clear any stale saved font so it doesn't override.
           if (c.font) {
-            root.style.setProperty("--font", c.font);
-            root.setAttribute("data-font",
-              c.font.indexOf("Alte Haas") >= 0  ? "altehaas" :
-              c.font.indexOf("Inconsolata") >= 0 ? "inconsolata" :
-              c.font.indexOf("Comic") >= 0       ? "comic" : "inter");
+            delete c.font;
+            try { localStorage.setItem("siteCustomize", JSON.stringify(c)); } catch(e) {}
           }
         }
       } catch (e) {}
@@ -116,7 +115,7 @@
       color: var(--tag-fg);
       padding: 8px 16px;
       border-radius: 100px;
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 500;
       text-decoration: none;
       transition: top 200ms ease;
@@ -139,7 +138,7 @@
       --placeholder:#d4d4d4;
       --hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
       --gap:        6px;
-      --font:       'Inter', system-ui, sans-serif;
+      --font:       'Arimo', system-ui, sans-serif;
       --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
       --theme-transition: 350ms ease;
     }
@@ -296,6 +295,7 @@
     }
 
     .nav-pill-name {
+      font-family: 'Arimo', system-ui, sans-serif;
       font-size: 13.5px;
       font-weight: 500;
       color: var(--nav-fg);
@@ -382,6 +382,7 @@
     }
 
     .nav-pill a {
+      font-family: 'Arimo', system-ui, sans-serif;
       font-size: 13.5px;
       font-weight: 500;
       color: var(--muted);
@@ -533,6 +534,7 @@
       background: var(--tag-bg);
       color: var(--tag-fg);
       border: 1px solid var(--tag-border);
+      font-family: 'Arimo', system-ui, sans-serif;
       font-size: 12.5px;
       font-weight: 500;
       padding: 4px 12px;
@@ -542,9 +544,10 @@
     }
 
     .about-bio {
-      font-size: 16px;
-      line-height: 1.65;
+      font-size: 15px;
+      line-height: 1.5;
       margin-bottom: 40px;
+      padding-left: 13px;
       color: var(--fg);
     }
 
@@ -556,6 +559,7 @@
       display: flex;
       gap: 10px;
       margin-bottom: 5px;
+      padding-left: 13px;
       font-size: 15px;
       line-height: 1.5;
     }
@@ -568,19 +572,22 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 24px 40px;
+      padding-left: 13px;
     }
 
     .contact-item .ci-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 500;
       color: var(--fg);
       margin-bottom: 3px;
     }
 
     .contact-item a {
-      font-size: 14.5px;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 400;
+      line-height: 1.5;
       color: var(--fg);
       transition: opacity 180ms ease;
       display: inline-flex;
@@ -686,6 +693,68 @@
     [data-theme="dark"] .customize-panel,
     [data-theme="custom"] .customize-panel { border-color: rgba(255, 255, 255, 0.07); }
     .customize-panel[hidden] { display: none; }
+
+    /* Info button & panel */
+    .info-btn {
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      border: 1px solid var(--tag-border);
+      border-radius: 100px;
+      padding: 3px 10px 3px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: opacity 180ms ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .info-btn:hover { opacity: 0.75; }
+    .info-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+
+    .info-panel {
+      position: fixed;
+      background: var(--nav-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 0, 0, 0.07);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+      z-index: 100;
+      min-width: 280px;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: contentIn 220ms var(--ease-out) both;
+    }
+    [data-theme="dark"] .info-panel,
+    [data-theme="custom"] .info-panel { border-color: rgba(255, 255, 255, 0.07); }
+    .info-panel[hidden] { display: none; }
+
+    .info-title {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--fg);
+    }
+    .info-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-label {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--fg);
+    }
+    .info-text {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--muted);
+      font-weight: 400;
+    }
     .customize-row {
       display: flex;
       align-items: center;
@@ -747,7 +816,7 @@
       border-radius: 11px;
       background: transparent;
       color: var(--nav-fg);
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 500;
       line-height: 1;
       cursor: pointer;
@@ -1092,7 +1161,7 @@
       50%      { opacity: 1;    transform: scale(1.4); }
     }
     .wip-message {
-      font-size: 13.5px;
+      font-size: 15px;
       color: var(--muted);
     }
     .wip-cursor {
@@ -1132,7 +1201,7 @@
 
     /* Secondary paragraphs — muted "tools/note" style */
     .project-desc .desc-note {
-      font-size: 13px;
+      font-size: 13.5px;
       line-height: 1.6;
       color: var(--muted);
       margin-top: 20px;
@@ -1157,6 +1226,7 @@
       width: 100%;
       border-radius: 6px;
       overflow: hidden;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
       opacity: 0;
       transform: translateY(50px);
       will-change: opacity, transform;
@@ -1166,6 +1236,7 @@
       position: relative;
       border-radius: 6px;
       overflow: hidden;
+      -webkit-mask-image: -webkit-radial-gradient(white, black);
       opacity: 0;
       transform: translateY(50px);
       will-change: opacity, transform;
@@ -1199,18 +1270,27 @@
 
 
     .project-img-item img,
-    .project-img-item video,
-    .project-hero img,
-    .project-hero video {
+    .project-hero img {
       width: 100%;
       height: auto;
       display: block;
+    }
+    .project-img-item video,
+    .project-hero video {
+      width: calc(100% + 2px);
+      margin-left: -1px;
+      height: auto;
+      display: block;
+      background: transparent;
+      border: none;
+      outline: none;
     }
 
 
     .video-wrap {
       position: relative;
       width: 100%;
+      background: transparent;
     }
 
     .mute-btn {
@@ -1223,7 +1303,7 @@
       border: none;
       border-radius: 100px;
       color: #fff;
-      font-size: 12px;
+      font-size: 12.5px;
       font-family: var(--font);
       font-weight: 500;
       padding: 5px 11px 5px 8px;
@@ -1573,7 +1653,7 @@
       <div class="section-block">
         <span class="section-tag">Currently</span>
         <div class="entry">
-          <span class="entry-name">BA – Design & Visual Communication<br>University of Bergen</span>
+          <span>BA – Design & Visual Communication<br>University of Bergen</span>
         </div>
       </div>
 
@@ -1582,20 +1662,20 @@
       <div class="skills-row">
         <div class="section-block">
           <span class="section-tag">Software</span>
-          <div class="entry"><span class="entry-name">Photoshop</span></div>
-          <div class="entry"><span class="entry-name">Illustrator</span></div>
-          <div class="entry"><span class="entry-name">InDesign</span></div>
-          <div class="entry"><span class="entry-name">After Effects</span></div>
-          <div class="entry"><span class="entry-name">Premiere Pro</span></div>
-          <div class="entry"><span class="entry-name">Blender</span></div>
+          <div class="entry"><span>Photoshop</span></div>
+          <div class="entry"><span>Illustrator</span></div>
+          <div class="entry"><span>InDesign</span></div>
+          <div class="entry"><span>After Effects</span></div>
+          <div class="entry"><span>Premiere Pro</span></div>
+          <div class="entry"><span>Blender</span></div>
         </div>
 
         <div class="section-block">
           <span class="section-tag">Skills</span>
-          <div class="entry"><span class="entry-name">Graphic Design</span></div>
-          <div class="entry"><span class="entry-name">Motion Graphics</span></div>
-          <div class="entry"><span class="entry-name">3D Modeling</span></div>
-          <div class="entry"><span class="entry-name">Photography</span></div>
+          <div class="entry"><span>Graphic Design</span></div>
+          <div class="entry"><span>Motion Graphics</span></div>
+          <div class="entry"><span>3D Modeling</span></div>
+          <div class="entry"><span>Photography</span></div>
         </div>
       </div>
 
@@ -1663,7 +1743,35 @@
             </p>
           </div>
         </span>
-        www.vegarem.no
+        <span class="info-wrap" style="position:relative;display:inline-block;">
+          <button class="info-btn" id="info-btn" aria-label="Site info" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            Info
+          </button>
+          <div class="info-panel" id="info-panel" hidden>
+            <div class="info-section">
+              <p class="info-label">Design & Build</p>
+              <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.<br>HTML, CSS & vanilla JavaScript.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Hosting</p>
+              <p class="info-text">Static files deployed on GitHub Pages with a custom domain.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Typography</p>
+              <p class="info-text">Set in Arimo Regular 400 & 500 by Steve Matteson.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Date of Birth</p>
+              <p class="info-text">Apr 14. 2026</p>
+            </div>
+          </div>
+        </span>
+      
         <svg aria-label="VEM" height="14" viewBox="0 0 912.43 345.11" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;fill:currentColor;opacity:0.25;margin:0 8px 0 12px;">
           <path fill-rule="evenodd" d="M296.15,0H33.05C8.84,0-7.13,25.19,3.19,47.08l131.55,279.07c11.9,25.24,47.81,25.24,59.71,0L326.01,47.08c10.32-21.89-5.65-47.08-29.86-47.08Z"/>
           <path fill-rule="evenodd" d="M561.1,38.94c0-21.42-17.36-38.78-38.78-38.78h-126.25v.03c-12.09-.15-24.24,6.14-30.27,18.9l-131.57,278.91c-10.33,21.89,5.64,47.09,29.85,47.09h263.13c18.08,0,31.55-14.06,32.92-30.29.61-2.74.96-5.57.96-8.49V38.94Z"/>
@@ -1671,7 +1779,7 @@
           <circle cx="43.2" cy="301.88" r="43.2"/>
         </svg>
         <a href="https://github.com/vegarefteland/vegarem.no" target="_blank" rel="noopener" style="display:inline-block;vertical-align:middle;color:inherit;margin-right:12px;opacity:0.25;transition:opacity 180ms ease;line-height:0;" aria-label="GitHub"><svg height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
-        <span style="opacity: 0.4;">v2.1</span>
+        <span style="opacity: 0.4;">v2.2</span>
       </footer>
 
     </div>
@@ -2934,16 +3042,12 @@
         root.style.setProperty("--tag-border", navInk === "#efefef"
           ? "rgba(255,255,255,0.25)" : "transparent");
       }
+      // Font picker removed — clear any stale saved font
       if (stored.font) {
-        root.style.setProperty("--font", stored.font);
-        // Tag the html element so we can apply font-specific style rules
-        root.setAttribute("data-font",
-          stored.font.includes("Alte Haas") ? "altehaas" :
-          stored.font.includes("Inconsolata") ? "inconsolata" :
-          stored.font.includes("Comic")      ? "comic" : "inter");
-      } else {
-        root.removeAttribute("data-font");
+        delete stored.font;
+        try { localStorage.setItem("siteCustomize", JSON.stringify(stored)); } catch(e) {}
       }
+      root.removeAttribute("data-font");
       // Sync picker UI (default the swatches to white when nothing is stored)
       const bgInput  = document.getElementById("customize-bg-input");
       const navInput = document.getElementById("customize-nav-input");
@@ -3026,6 +3130,13 @@
 
       btn.addEventListener("click", e => {
         e.stopPropagation();
+        // Close info panel if open
+        const infoPanel = document.getElementById("info-panel");
+        const infoBtn   = document.getElementById("info-btn");
+        if (infoPanel && !infoPanel.hidden) {
+          infoPanel.hidden = true;
+          if (infoBtn) infoBtn.setAttribute("aria-expanded", "false");
+        }
         if (document.documentElement.getAttribute("data-theme") !== "custom") {
           enterCustomMode();
           openPanel();
@@ -3069,6 +3180,52 @@
 
       // If we loaded already in custom mode, sync the inputs
       applyCustomColors();
+    })();
+
+    /* ── Info panel toggle ───────────────────────────────────────── */
+    (function initInfo() {
+      const btn   = document.getElementById("info-btn");
+      const panel = document.getElementById("info-panel");
+      if (!btn || !panel) return;
+
+      document.body.appendChild(panel);
+
+      function positionPanel() {
+        const rect = btn.getBoundingClientRect();
+        const pw   = panel.offsetWidth;
+        const left = Math.max(8, Math.min(
+          window.innerWidth - pw - 8,
+          rect.left + rect.width / 2 - pw / 2
+        ));
+        panel.style.left   = left + "px";
+        panel.style.bottom = (window.innerHeight - rect.top + 8) + "px";
+      }
+
+      function openPanel()  {
+        panel.hidden = false;
+        positionPanel();
+        btn.setAttribute("aria-expanded", "true");
+      }
+      function closePanel() {
+        panel.hidden = true;
+        btn.setAttribute("aria-expanded", "false");
+      }
+
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        if (panel.hidden) openPanel(); else closePanel();
+      });
+
+      // Close when customize button is clicked
+      const customizeBtn = document.getElementById("customize-btn");
+      if (customizeBtn) customizeBtn.addEventListener("click", () => closePanel());
+
+      document.addEventListener("click", e => {
+        if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
+      });
+
+      window.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true });
+      window.addEventListener("resize", () => { if (!panel.hidden) positionPanel(); });
     })();
 
     /* ════════════════════════════════════════════════════════════════

@@ -34,7 +34,7 @@ const SITE = {
       folder: "02",
       cover: "images/projects/02/cover.mp4",
       color: "#1C1C1E",
-      wip: true,
+      wip: false,
       year: "2026",
       description:
         "<strong>Student Project in collaboration with:</strong>\n\n" +
