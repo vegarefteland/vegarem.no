@@ -19,7 +19,7 @@
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
 
   <!-- Critical: runs before first paint — theme + intro cover -->
   <style>
@@ -619,15 +619,20 @@
       border: none;
       border-top: 1px solid var(--border);
       margin: 32px 0;
+      width: calc(100vw - 20px - 20px);
     }
 
     .about-footer {
       margin-top: 64px;
       padding-top: 20px;
       border-top: 1px solid var(--border);
+      width: calc(100vw - 20px - 20px);
       font-size: 12.5px;
       color: var(--muted);
       line-height: 1.7;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     /* ── Customize popover (easter egg) ───────────────────────── */
@@ -761,6 +766,13 @@
       line-height: 1.5;
       color: var(--muted);
       font-weight: 400;
+    }
+    .info-version {
+      text-align: right;
+      font-size: 11px;
+      color: var(--muted);
+      opacity: 0.5;
+      margin-top: 4px;
     }
     .customize-row {
       display: flex;
@@ -907,6 +919,62 @@
     .archive-grid {
       position: relative;
     }
+
+    /* Back to top button — fades in at bottom of project pages */
+    .back-to-top {
+      display: flex;
+      justify-content: center;
+      padding: 40px 0 20px;
+      margin-left: calc(400px + 40px); /* align with project-right (left col + gap) */
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .back-to-top.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .back-to-top-btn {
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      border: 1px solid var(--tag-border);
+      border-radius: 100px;
+      padding: 6px 16px 6px 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 180ms ease;
+    }
+    .back-to-top-btn:hover { opacity: 0.75; }
+    .back-to-top-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+    .archive-shuffle-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 40px 0 20px;
+    }
+    .archive-shuffle-btn {
+      background: var(--tag-bg);
+      color: var(--tag-fg);
+      border: 1px solid var(--tag-border);
+      border-radius: 100px;
+      padding: 6px 16px 6px 12px;
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: var(--font);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 180ms ease;
+    }
+    .archive-shuffle-btn:hover { opacity: 0.75; }
+    .archive-shuffle-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
 
     .archive-img {
       position: absolute;
@@ -1506,6 +1574,7 @@
       }
       .project-left { position: static; }
       .project-right { padding-right: 0; }
+      .back-to-top { margin-left: 0; }
     }
 
     /* ─── Stagger for project grid ───────────────────────────── */
@@ -1711,6 +1780,37 @@
       </div>
 
       <footer class="about-footer">
+        <span class="info-wrap" style="position:relative;display:inline-block;">
+          <button class="info-btn" id="info-btn" aria-label="Site info" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            Technical Info
+          </button>
+          <div class="info-panel" id="info-panel" hidden>
+            <div class="info-section">
+              <p class="info-label">Design & Build</p>
+              <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.<br>HTML, CSS & vanilla JavaScript.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Hosting</p>
+              <p class="info-text">Static files deployed on GitHub Pages with a custom domain.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Typography</p>
+              <p class="info-text">Set in Arimo Regular 400 & 500 by Steve Matteson.</p>
+            </div>
+            <div class="info-section">
+              <p class="info-label">Date of Birth</p>
+              <p class="info-text">Apr 14. 2026</p>
+            </div>
+            <p class="info-version">v2.1</p>
+          </div>
+        </span>
+
+
         <span class="customize-wrap">
           <button class="customize-btn" id="customize-btn" aria-label="Customize colors" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1750,43 +1850,6 @@
             </p>
           </div>
         </span>
-        <span class="info-wrap" style="position:relative;display:inline-block;">
-          <button class="info-btn" id="info-btn" aria-label="Site info" aria-expanded="false">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            Info
-          </button>
-          <div class="info-panel" id="info-panel" hidden>
-            <div class="info-section">
-              <p class="info-label">Design & Build</p>
-              <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.<br>HTML, CSS & vanilla JavaScript.</p>
-            </div>
-            <div class="info-section">
-              <p class="info-label">Hosting</p>
-              <p class="info-text">Static files deployed on GitHub Pages with a custom domain.</p>
-            </div>
-            <div class="info-section">
-              <p class="info-label">Typography</p>
-              <p class="info-text">Set in Arimo Regular 400 & 500 by Steve Matteson.</p>
-            </div>
-            <div class="info-section">
-              <p class="info-label">Date of Birth</p>
-              <p class="info-text">Apr 14. 2026</p>
-            </div>
-          </div>
-        </span>
-      
-        <svg aria-label="VEM" height="14" viewBox="0 0 912.43 345.11" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;fill:currentColor;opacity:0.25;margin:0 8px 0 12px;">
-          <path fill-rule="evenodd" d="M296.15,0H33.05C8.84,0-7.13,25.19,3.19,47.08l131.55,279.07c11.9,25.24,47.81,25.24,59.71,0L326.01,47.08c10.32-21.89-5.65-47.08-29.86-47.08Z"/>
-          <path fill-rule="evenodd" d="M561.1,38.94c0-21.42-17.36-38.78-38.78-38.78h-126.25v.03c-12.09-.15-24.24,6.14-30.27,18.9l-131.57,278.91c-10.33,21.89,5.64,47.09,29.85,47.09h263.13c18.08,0,31.55-14.06,32.92-30.29.61-2.74.96-5.57.96-8.49V38.94Z"/>
-          <rect x="583.18" y=".18" width="329.25" height="344.93" rx="38.78" ry="38.78"/>
-          <circle cx="43.2" cy="301.88" r="43.2"/>
-        </svg>
-        <a href="https://github.com/vegarefteland/vegarem.no" target="_blank" rel="noopener" style="display:inline-block;vertical-align:middle;color:inherit;margin-right:12px;opacity:0.25;transition:opacity 180ms ease;line-height:0;" aria-label="GitHub"><svg height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg></a>
-        <span style="opacity: 0.4;">v2.2</span>
       </footer>
 
     </div>
@@ -1799,6 +1862,16 @@
   <section id="page-archive" class="page" aria-label="Archive">
     <p class="archive-intro"></p>
     <div class="archive-grid" id="archive-grid"></div>
+    <div class="archive-shuffle-wrap">
+      <button class="archive-shuffle-btn" id="archive-shuffle-btn" aria-label="Shuffle archive">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/>
+          <polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+          <line x1="4" y1="4" x2="9" y2="9"/>
+        </svg>
+        Shuffle
+      </button>
+    </div>
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════
@@ -1920,6 +1993,31 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    // Archive shuffle button
+    document.getElementById("archive-shuffle-btn").addEventListener("click", () => {
+      const grid = document.getElementById("archive-grid");
+      grid.innerHTML = "";
+      renderArchive();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // Back to top — observe and reveal when scrolled into view
+    let backToTopObs = null;
+    function initBackToTop() {
+      const el = document.getElementById("back-to-top");
+      if (!el) return;
+      if (backToTopObs) backToTopObs.disconnect();
+      backToTopObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          el.classList.toggle("visible", e.isIntersecting);
+        });
+      }, { threshold: 0.1 });
+      backToTopObs.observe(el);
+      el.querySelector(".back-to-top-btn").addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
     function slugify(str) {
       return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     }
@@ -2031,6 +2129,15 @@
             <div class="project-desc" data-nosnippet>${paragraphs}</div>
           </div>
           <div class="project-right" id="project-right"></div>
+        </div>
+        <div class="back-to-top" id="back-to-top">
+          <button class="back-to-top-btn" aria-label="Back to top">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+            Back to top
+          </button>
         </div>
       `;
 
@@ -2295,6 +2402,7 @@
       }
 
       loadNextProjectItem();
+      initBackToTop();
     }
 
     function makeNavLink(id, label) {
