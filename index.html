@@ -922,7 +922,7 @@
 
     /* Back to top button — fades in at bottom of project pages */
     .back-to-top {
-      display: flex;
+      display: none;
       justify-content: center;
       padding: 40px 0 20px;
       margin-left: calc(400px + 40px); /* align with project-right (left col + gap) */
@@ -994,9 +994,25 @@
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 6px; /* matches cell — keeps rounded corners when scaled down */
+      border-radius: 6px;
       transition: transform 500ms var(--ease-out),
                   box-shadow 350ms var(--ease-out);
+    }
+
+    /* Idle wiggle — one image at a time */
+    .archive-img.wiggle img,
+    .archive-img.wiggle video {
+      animation: archiveWiggle 1s var(--ease-out);
+    }
+    @keyframes archiveWiggle {
+      0%   { transform: scale(1) rotate(0deg); }
+      12%  { transform: scale(0.97) rotate(-1.5deg); }
+      28%  { transform: scale(0.97) rotate(1.3deg); }
+      42%  { transform: scale(0.97) rotate(-1deg); }
+      56%  { transform: scale(0.98) rotate(0.8deg); }
+      70%  { transform: scale(0.98) rotate(-0.5deg); }
+      85%  { transform: scale(0.99) rotate(0.3deg); }
+      100% { transform: scale(1) rotate(0deg); }
     }
     /* Hover: shrink the media slightly inside the cell so no detail gets cropped. */
     .archive-img:hover img,
@@ -1011,6 +1027,13 @@
     [data-theme="dark"] .archive-img:hover video {
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25),
                   0 2px 8px rgba(0, 0, 0, 0.30);
+    }
+
+    @media (max-width: 600px) {
+      .archive-img.wiggle img,
+      .archive-img.wiggle video {
+        animation: none;
+      }
     }
 
     /* Per-image reveal — each cell slides up + fades in the moment its image
@@ -1980,6 +2003,9 @@
         });
       }
 
+      // Stop wiggle when leaving archive
+      if (pageId !== "archive") stopArchiveWiggle();
+
       // Re-render archive fresh each visit so shuffle + masonry are correct
       if (pageId === "archive") {
         const intro = document.querySelector(".archive-intro");
@@ -1994,6 +2020,30 @@
     }
 
     // Archive shuffle button
+    // Idle wiggle — randomly pick one archive image at a time
+    let wiggleTimer = null;
+    function startArchiveWiggle() {
+      stopArchiveWiggle();
+      if (window.innerWidth <= 600) return;
+      function wiggleNext() {
+        const imgs = Array.from(document.querySelectorAll("#archive-grid .archive-img.cascade-in:not(.wiggle)"));
+        if (!imgs.length || currentPage !== "archive") { stopArchiveWiggle(); return; }
+        // Pick 3 random images (or fewer if not enough available)
+        const count = Math.min(3, imgs.length);
+        for (let n = 0; n < count; n++) {
+          const idx = Math.floor(Math.random() * imgs.length);
+          const pick = imgs.splice(idx, 1)[0];
+          pick.classList.add("wiggle");
+          pick.addEventListener("animationend", () => pick.classList.remove("wiggle"), { once: true });
+        }
+        wiggleTimer = setTimeout(wiggleNext, 1800 + Math.random() * 2000);
+      }
+      wiggleTimer = setTimeout(wiggleNext, 2500);
+    }
+    function stopArchiveWiggle() {
+      if (wiggleTimer) { clearTimeout(wiggleTimer); wiggleTimer = null; }
+    }
+
     document.getElementById("archive-shuffle-btn").addEventListener("click", () => {
       const grid = document.getElementById("archive-grid");
       grid.innerHTML = "";
@@ -2006,6 +2056,7 @@
     function initBackToTop() {
       const el = document.getElementById("back-to-top");
       if (!el) return;
+      el.style.display = "flex";
       if (backToTopObs) backToTopObs.disconnect();
       backToTopObs = new IntersectionObserver((entries) => {
         entries.forEach(e => {
@@ -2159,7 +2210,7 @@
       const MAX_MISSES = 1;
 
       function loadNextProjectItem() {
-        if (projMisses >= MAX_MISSES) { lbLoadingActive = false; return; }
+        if (projMisses >= MAX_MISSES) { lbLoadingActive = false; initBackToTop(); return; }
         const i = projIndex++;
         const num  = String(i).padStart(2, "0");
         const base = `images/projects/${project.folder}/${num}`;
@@ -2402,7 +2453,6 @@
       }
 
       loadNextProjectItem();
-      initBackToTop();
     }
 
     function makeNavLink(id, label) {
@@ -2692,6 +2742,7 @@
               grid.classList.add("layout-settled");
               void grid.offsetHeight;
               masonryLayout();
+              startArchiveWiggle();
             }
           }, 600);
           return;
