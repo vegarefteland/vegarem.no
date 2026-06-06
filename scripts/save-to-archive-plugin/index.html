@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    :root {
+      --bg: #2a2a2a;
+      --fg: #e0e0e0;
+      --muted: #888;
+      --btn-bg: #3a3a3a;
+      --btn-hover: #4a4a4a;
+      --accent: #4a9eff;
+      --border: #444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: "Adobe Clean", system-ui, sans-serif;
+      font-size: 11px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100vh;
+    }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .config {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    input[type="number"], select {
+      background: var(--btn-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--fg);
+      font-size: 11px;
+      padding: 4px 8px;
+      width: 80px;
+      outline: none;
+    }
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    select {
+      width: 90px;
+    }
+
+    .save-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 150ms ease;
+      width: 100%;
+      margin-top: 4px;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .save-btn:active { opacity: 0.7; }
+    .save-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .status {
+      font-size: 11px;
+      color: var(--muted);
+      min-height: 16px;
+      line-height: 1.4;
+    }
+    .status.success { color: #5cb85c; }
+    .status.error { color: #d9534f; }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 4px 0;
+    }
+
+    .info {
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Save to Archive</h2>
+
+  <div class="config">
+    <div class="row">
+      <label>Quality</label>
+      <input type="number" id="quality" value="85" min="1" max="100">
+    </div>
+    <div class="row">
+      <label>Max width</label>
+      <input type="number" id="maxWidth" value="2000" min="0" step="100">
+    </div>
+    <div class="row">
+      <label>Format</label>
+      <select id="format">
+        <option value="webp">WebP</option>
+        <option value="png">PNG</option>
+        <option value="jpg">JPEG</option>
+      </select>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <button class="save-btn" id="saveBtn">Save to Archive</button>
+
+  <p class="status" id="status"></p>
+
+  <hr class="divider">
+
+  <p class="info">
+    Saves to: images/archive/<br>
+    Auto-numbers from last file in folder.
+  </p>
+
+  <script src="index.js"></script>
+</body>
+</html>

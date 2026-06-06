@@ -400,13 +400,11 @@
     /* ─── ── HOME PAGE ─────────────────────────────────────────── */
     .project-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: var(--gap);
+      padding: 0 20px;
     }
 
-    @media (max-width: 900px) {
-      .project-grid { grid-template-columns: repeat(2, 1fr); }
-    }
     @media (max-width: 550px) {
       .project-grid { grid-template-columns: 1fr; }
     }
@@ -417,7 +415,7 @@
       overflow: hidden;
       cursor: pointer;
       background: var(--placeholder);
-      border-radius: 6px;
+      border-radius: 4px;
       transition: box-shadow 250ms ease;
     }
     .project-card:hover {
@@ -994,7 +992,7 @@
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 6px;
+      border-radius: 4px;
       transition: transform 500ms var(--ease-out),
                   box-shadow 350ms var(--ease-out);
     }
@@ -1123,7 +1121,7 @@
       max-width: min(90vw, 1000px);
       max-height: 88vh;
       object-fit: contain;
-      border-radius: 6px;
+      border-radius: 4px;
       filter: drop-shadow(0 24px 60px rgba(0,0,0,0.5));
     }
     #lightbox-color {
@@ -1322,7 +1320,7 @@
     .project-hero {
       position: relative;
       width: 100%;
-      border-radius: 6px;
+      border-radius: 4px;
       overflow: hidden;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       opacity: 0;
@@ -1332,7 +1330,7 @@
 
     .project-img-item {
       position: relative;
-      border-radius: 6px;
+      border-radius: 4px;
       overflow: hidden;
       -webkit-mask-image: -webkit-radial-gradient(white, black);
       opacity: 0;
@@ -1570,7 +1568,7 @@
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 6px;
+      border-radius: 4px;
       user-select: none;
     }
 
@@ -1587,7 +1585,7 @@
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 6px;
+      border-radius: 4px;
       user-select: none;
     }
 
