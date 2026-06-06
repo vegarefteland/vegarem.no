@@ -406,7 +406,7 @@
     }
 
     @media (max-width: 550px) {
-      .project-grid { grid-template-columns: 1fr; }
+      .project-grid { grid-template-columns: 1fr; padding: 0; }
     }
 
     .project-card {
@@ -2014,7 +2014,7 @@
       }
 
       renderNav();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
     }
 
     // Archive shuffle button
@@ -2104,6 +2104,8 @@
       }
     }
 
+    // Disable browser scroll restoration so pages always start at top
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.addEventListener("popstate", restoreFromPath);
 
     function renderProjectPage(project) {
