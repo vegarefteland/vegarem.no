@@ -226,7 +226,7 @@
     .page {
       display: none;
       min-height: 100vh;
-      padding: 72px 20px 40px;
+      padding: 72px 16px 40px;
       animation: pageIn 320ms var(--ease-out) both;
     }
     .page.active { display: block; }
@@ -402,11 +402,11 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: var(--gap);
-      padding: 0 20px;
+      padding: 0;
     }
 
     @media (max-width: 550px) {
-      .project-grid { grid-template-columns: 1fr; padding: 0; }
+      .project-grid { grid-template-columns: 1fr; }
     }
 
     .project-card {
@@ -617,14 +617,14 @@
       border: none;
       border-top: 1px solid var(--border);
       margin: 32px 0;
-      width: calc(100vw - 20px - 20px);
+      width: calc(100vw - 16px - 16px);
     }
 
     .about-footer {
       margin-top: 64px;
       padding-top: 20px;
       border-top: 1px solid var(--border);
-      width: calc(100vw - 20px - 20px);
+      width: calc(100vw - 16px - 16px);
       font-size: 12.5px;
       color: var(--muted);
       line-height: 1.7;
