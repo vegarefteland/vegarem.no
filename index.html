@@ -36,16 +36,16 @@
       font-display: swap;
     }
 
-    /* Dark is the default; light/custom only apply when the user opts in.
+    /* Light is the default; dark/custom only apply when the user opts in.
        For custom mode we use var(--bg) so the JS-set color wins (the
        critical script in <head> sets --bg inline before first paint). */
-    html, body { background: #0d0d0d; }
-    html[data-theme="light"],
-    html[data-theme="light"] body { background: #ffffff; }
+    html, body { background: #ffffff; }
+    html[data-theme="dark"],
+    html[data-theme="dark"] body { background: #0d0d0d; }
     html[data-theme="custom"],
     html[data-theme="custom"] body { background: var(--bg, #ffffff); }
-    #intro { position: fixed; inset: 0; z-index: 99999; background: #0d0d0d; }
-    html[data-theme="light"] #intro { background: #ffffff; }
+    #intro { position: fixed; inset: 0; z-index: 99999; background: #ffffff; }
+    html[data-theme="dark"] #intro { background: #0d0d0d; }
     html[data-theme="custom"] #intro { background: var(--bg, #ffffff); }
     html.intro-done #intro { display: none !important; }
   </style>
@@ -53,11 +53,11 @@
     (function () {
       try {
         var saved = localStorage.getItem("theme");
-        // Valid themes: "light", "dark", "custom". Default = dark.
-        var theme = (saved === "light" || saved === "custom") ? saved : "dark";
+        // Valid themes: "light", "dark", "custom". Default = light.
+        var theme = (saved === "dark" || saved === "custom") ? saved : "light";
         document.documentElement.setAttribute("data-theme", theme);
       } catch (e) {
-        document.documentElement.setAttribute("data-theme", "dark");
+        document.documentElement.setAttribute("data-theme", "light");
       }
       // If in custom mode, apply user-picked colors + auto-contrast text before first paint
       try {
@@ -1016,16 +1016,8 @@
     .archive-img:hover img,
     .archive-img:hover video {
       transform: scale(0.96);
-      /* Tight, soft shadow — total reach stays within the 4% scale-down inset +
-         6px masonry gap, so it never reaches a neighbour. */
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05),
-                  0 2px 8px rgba(0, 0, 0, 0.06);
     }
-    [data-theme="dark"] .archive-img:hover img,
-    [data-theme="dark"] .archive-img:hover video {
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25),
-                  0 2px 8px rgba(0, 0, 0, 0.30);
-    }
+
 
     @media (max-width: 600px) {
       .archive-img.wiggle img,
@@ -1373,13 +1365,13 @@
     }
     .project-img-item video,
     .project-hero video {
-      width: calc(100% + 2px);
-      margin-left: -1px;
+      width: 100%;
       height: auto;
       display: block;
       background: transparent;
       border: none;
       outline: none;
+      transform: scale(1.005);
     }
 
 
@@ -1829,7 +1821,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jun 8. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jun 9. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.1</p>
           </div>
@@ -2617,7 +2609,7 @@
       const grid = document.getElementById("archive-grid");
       if (!grid || !archiveCells.length) return;
 
-      const GAP  = 6;
+      const GAP  = 35;
       const W    = grid.offsetWidth;
       const cols = W >= 1100 ? 5 : W >= 768 ? 3 : 2;
       const colW = (W - GAP * (cols - 1)) / cols;

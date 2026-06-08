@@ -48,7 +48,10 @@
       "Bash(/usr/bin/python3 -c ' *)",
       "mcp__Claude_in_Chrome__browser_batch",
       "Bash(curl -L \"https://github.com/eigilnikolajsen/commit-mono/raw/master/CommitMono-400-Regular.otf\" -o /Users/vegarefteland/Desktop/nettside/fonts/CommitMono-Regular.otf)",
-      "Bash(gh repo *)"
+      "Bash(gh repo *)",
+      "Bash(sort -t/ -k9 -V)",
+      "Bash(ffprobe -v quiet -print_format json -show_streams /Users/vegarefteland/Desktop/vegarem.no/images/archive/41.mp4)",
+      "Bash(ffmpeg -y -i /Users/vegarefteland/Desktop/vegarem.no/images/archive/41.mp4 -c:v libx264 -crf 26 -preset slow -an -movflags +faststart /Users/vegarefteland/Desktop/vegarem.no/images/archive/41_compressed.mp4)"
     ]
   }
 }
