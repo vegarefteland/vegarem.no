@@ -984,7 +984,9 @@
     /* Position transitions only enabled after the initial shuffle settles —
        prevents cells from "flying" from their pre-shuffle spot during reveal. */
     .archive-grid.layout-settled .archive-img {
-      transition: top 450ms var(--ease-out), left 450ms var(--ease-out);
+      transition: top 800ms cubic-bezier(0.16, 1, 0.3, 1),
+                  left 800ms cubic-bezier(0.16, 1, 0.3, 1),
+                  width 800ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .archive-img img,
@@ -2039,10 +2041,24 @@
     }
 
     document.getElementById("archive-shuffle-btn").addEventListener("click", () => {
+      if (!archiveCells.length) return;
       const grid = document.getElementById("archive-grid");
-      grid.innerHTML = "";
-      renderArchive();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!grid) return;
+
+      // Fade out all cells
+      archiveCells.forEach(cell => {
+        cell.style.transition = "opacity 300ms ease";
+        cell.style.opacity = "0";
+      });
+
+      // After fade out: clear grid, scroll to top, re-render fresh
+      setTimeout(() => {
+        grid.innerHTML = "";
+        grid.style.height = "";
+        archiveCells = [];
+        window.scrollTo({ top: 0, behavior: "instant" });
+        renderArchive();
+      }, 320);
     });
 
     // Back to top — observe and reveal when scrolled into view
