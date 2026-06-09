@@ -2714,78 +2714,82 @@
       const grid = document.getElementById("archive-grid");
       archiveCells = [];
       if (grid) grid.classList.remove("layout-settled"); // reset for fresh reveal
-      const gen = ++archiveGen; // this load's generation — stale callbacks bail early
-      let archIndex  = 1;
-      let archMisses = 0;
-      const MAX_MISSES = 1;
+      const gen = ++archiveGen;
 
-      function loadNextArchiveItem() {
-        if (gen !== archiveGen) return; // stale — a newer render started
-        if (archMisses >= MAX_MISSES) {
+      // ── Phase 1: discover which files exist ──
+      const discovered = [];
+      let discoverIdx = 1;
+      let discoverMisses = 0;
+      const MAX_MISSES = 1;
+      const formats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
+
+      function discoverNext() {
+        if (gen !== archiveGen) return;
+        if (discoverMisses >= MAX_MISSES) {
+          // Shuffle discovered list, then load them in that order
+          for (let i = discovered.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [discovered[i], discovered[j]] = [discovered[j], discovered[i]];
+          }
+          loadShuffled(0);
+          return;
+        }
+
+        const num = String(discoverIdx++).padStart(2, "0");
+        let fmtIdx = 0;
+        const probe = new Image();
+
+        probe.onload = () => {
+          if (gen !== archiveGen) return;
+          discoverMisses = 0;
+          discovered.push({ num, src: probe.src, type: "img" });
+          discoverNext();
+        };
+        probe.onerror = () => {
+          if (gen !== archiveGen) return;
+          fmtIdx++;
+          if (fmtIdx < formats.length) {
+            probe.src = `images/archive/${num}${formats[fmtIdx]}`;
+          } else {
+            // Try video
+            const vid = document.createElement("video");
+            vid.preload = "metadata";
+            vid.onloadedmetadata = () => {
+              if (gen !== archiveGen) return;
+              discoverMisses = 0;
+              discovered.push({ num, src: `images/archive/${num}.mp4`, type: "video" });
+              discoverNext();
+            };
+            vid.onerror = () => {
+              if (gen !== archiveGen) return;
+              discoverMisses++;
+              discoverNext();
+            };
+            vid.src = `images/archive/${num}.mp4`;
+          }
+        };
+        probe.src = `images/archive/${num}${formats[0]}`;
+      }
+
+      // ── Phase 2: load in shuffled order, pop in one by one ──
+      function loadShuffled(idx) {
+        if (gen !== archiveGen) return;
+        if (idx >= discovered.length) {
           lbLoadingActive = false;
-          // All images revealed individually as they loaded. Once their
-          // cascade-in animations finish, shuffle to randomised positions
-          // using a smooth CSS position transition.
-          const snapGen = gen;
+          // Already in random order — just settle and start wiggle
           setTimeout(() => {
-            if (snapGen !== archiveGen || !archiveCells.length) return;
-            for (let i = archiveCells.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [archiveCells[i], archiveCells[j]] = [archiveCells[j], archiveCells[i]];
-            }
-            const grid = document.getElementById("archive-grid");
+            if (gen !== archiveGen) return;
             if (grid) {
               grid.classList.add("layout-settled");
-              void grid.offsetHeight;
-              masonryLayout();
               startArchiveWiggle();
             }
           }, 600);
           return;
         }
 
-        const i    = archIndex++;
-        const num  = String(i).padStart(2, "0");
-        const webp = `images/archive/${num}.webp`;
-        const jpg  = `images/archive/${num}.jpg`;
-        const jpeg = `images/archive/${num}.jpeg`;
-        const png  = `images/archive/${num}.png`;
-        const gif  = `images/archive/${num}.gif`;
-        const mp4  = `images/archive/${num}.mp4`;
+        const item = discovered[idx];
 
-        const img = new Image();
-        img.alt = "";
-        img.setAttribute("aria-hidden", "true");
-        img.decoding = "async";
-
-        img.onload = () => {
-          if (gen !== archiveGen) return; // stale
-          archMisses = 0;
-          const cell = document.createElement("div");
-          cell.className = "archive-img";
-          cell.appendChild(img);
-          cell.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
-          archiveCells.push(cell);
-          grid.appendChild(cell);
-          scheduleMasonry();
-          if (num === "06") { cell.classList.add("cd-spin"); initCdSpin(cell, img); }
-          cell.classList.add("cascade-in");
-          loadNextArchiveItem();
-        };
-
-        img.onerror = () => {
-          if (gen !== archiveGen) return; // stale
-          if      (img.src.endsWith(".webp"))  img.src = jpg;
-          else if (img.src.endsWith(".jpg"))   img.src = jpeg;
-          else if (img.src.endsWith(".jpeg"))  img.src = png;
-          else if (img.src.endsWith(".png"))   img.src = gif;
-          else if (img.src.endsWith(".gif"))   tryArchiveVideo(mp4);
-          else { archMisses++; loadNextArchiveItem(); }
-        };
-
-        img.src = webp;
-
-        function tryArchiveVideo(src) {
+        if (item.type === "video") {
           const video = document.createElement("video");
           video.autoplay    = true;
           video.loop        = true;
@@ -2795,8 +2799,7 @@
           video.style.cssText = "width:100%;height:auto;display:block;";
 
           video.onloadedmetadata = () => {
-            if (gen !== archiveGen) return; // stale
-            archMisses = 0;
+            if (gen !== archiveGen) return;
             const cell = document.createElement("div");
             cell.className = "archive-img";
             cell.appendChild(video);
@@ -2805,20 +2808,35 @@
             grid.appendChild(cell);
             scheduleMasonry();
             cell.classList.add("cascade-in");
-            loadNextArchiveItem();
+            loadShuffled(idx + 1);
           };
+          video.onerror = () => { loadShuffled(idx + 1); };
+          video.src = item.src;
+        } else {
+          const img = new Image();
+          img.alt = "";
+          img.setAttribute("aria-hidden", "true");
+          img.decoding = "async";
 
-          video.onerror = () => {
-            if (gen !== archiveGen) return; // stale
-            archMisses++;
-            loadNextArchiveItem();
+          img.onload = () => {
+            if (gen !== archiveGen) return;
+            const cell = document.createElement("div");
+            cell.className = "archive-img";
+            cell.appendChild(img);
+            cell.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
+            archiveCells.push(cell);
+            grid.appendChild(cell);
+            scheduleMasonry();
+            if (item.num === "06") { cell.classList.add("cd-spin"); initCdSpin(cell, img); }
+            cell.classList.add("cascade-in");
+            loadShuffled(idx + 1);
           };
-
-          video.src = src;
+          img.onerror = () => { loadShuffled(idx + 1); };
+          img.src = item.src;
         }
       }
 
-      loadNextArchiveItem();
+      discoverNext();
     }
 
     /* Warm the browser cache for archive images in the background so the page
