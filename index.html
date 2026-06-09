@@ -952,17 +952,19 @@
     .back-to-top-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
 
     .archive-shuffle-wrap {
-      display: none;
+      display: flex;
       justify-content: center;
       padding: 40px 0 20px;
+      visibility: hidden;
       opacity: 0;
-      transform: translateY(20px);
       transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                  visibility 0s 0.6s;
     }
     .archive-shuffle-wrap.visible {
+      visibility: visible;
       opacity: 1;
-      transform: translateY(0);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                  visibility 0s 0s;
     }
     .archive-shuffle-btn {
       background: var(--tag-bg);
@@ -2053,11 +2055,12 @@
       const grid = document.getElementById("archive-grid");
       if (!grid) return;
 
-      // Hide shuffle button
+      // Fade out shuffle button and all cells together
       const shuffleWrap = document.querySelector(".archive-shuffle-wrap");
-      if (shuffleWrap) { shuffleWrap.classList.remove("visible"); shuffleWrap.style.display = "none"; }
-
-      // Fade out all cells
+      if (shuffleWrap) {
+        shuffleWrap.style.transition = "opacity 300ms ease";
+        shuffleWrap.style.opacity = "0";
+      }
       archiveCells.forEach(cell => {
         cell.style.transition = "opacity 300ms ease";
         cell.style.opacity = "0";
@@ -2065,6 +2068,11 @@
 
       // After fade out: clear grid, scroll to top, re-render fresh
       setTimeout(() => {
+        if (shuffleWrap) {
+          shuffleWrap.classList.remove("visible");
+          shuffleWrap.style.transition = "";
+          shuffleWrap.style.opacity = "";
+        }
         grid.innerHTML = "";
         grid.style.height = "";
         archiveCells = [];
@@ -2765,7 +2773,6 @@
               startArchiveWiggle();
               const shuffleWrap = document.querySelector(".archive-shuffle-wrap");
               if (shuffleWrap) {
-                shuffleWrap.style.display = "flex";
                 requestAnimationFrame(() => shuffleWrap.classList.add("visible"));
               }
             }
