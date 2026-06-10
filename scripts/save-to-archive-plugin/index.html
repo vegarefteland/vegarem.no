@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Adobe Clean", system-ui, sans-serif;
+      font-size: 11px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .config {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field-label {
+      font-size: 10px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .save-btn {
+      background: #4a9eff;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 150ms ease;
+      width: 100%;
+      margin-top: 4px;
+    }
+    .save-btn:hover { opacity: 0.85; }
+    .save-btn:active { opacity: 0.7; }
+    .save-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .status {
+      font-size: 11px;
+      color: #777;
+      min-height: 16px;
+      text-align: center;
+    }
+    .status.success { color: #5cb85c; }
+    .status.error { color: #d9534f; }
+
+    .footer {
+      font-size: 9px;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="config">
+    <div class="field">
+      <sp-label class="field-label">Quality</sp-label>
+      <sp-textfield type="number" id="quality" value="100" min="1" max="100"></sp-textfield>
+    </div>
+    <div class="field">
+      <sp-label class="field-label">Max width (px)</sp-label>
+      <sp-textfield type="number" id="maxWidth" value="2000" min="0" step="100"></sp-textfield>
+    </div>
+  </div>
+
+  <sp-action-button id="saveBtn" style="width:100%;">Save to Archive</sp-action-button>
+
+  <p class="status" id="status"></p>
+
+  <p class="footer">WebP · Auto-numbered · images/archive/</p>
+
+  <script src="index.js"></script>
+</body>
+</html>
