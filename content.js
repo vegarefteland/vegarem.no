@@ -100,6 +100,6 @@ const SITE = {
    * Archive images are loaded automatically from images/archive/
    * by numbering them 01, 02, 03 … (webp / jpg / jpeg / png / gif).
    * ────────────────────────────────────────────────────────────── */
-  archiveIntro: " ",
+  archiveIntro: "Personal projects, Ideas, Experiments and Concepts",
 
 };

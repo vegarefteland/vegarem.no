@@ -1833,7 +1833,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jun 10. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jun 13. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.1</p>
           </div>
@@ -2032,7 +2032,7 @@
       stopArchiveWiggle();
       if (window.innerWidth <= 600) return;
       function wiggleNext() {
-        const imgs = Array.from(document.querySelectorAll("#archive-grid .archive-img.cascade-in:not(.wiggle)"));
+        const imgs = Array.from(document.querySelectorAll("#archive-grid .archive-img.cascade-in:not(.wiggle):not(.cd-spin)"));
         if (!imgs.length || currentPage !== "archive") { stopArchiveWiggle(); return; }
         // Pick 3 random images (or fewer if not enough available)
         const count = Math.min(3, imgs.length);
