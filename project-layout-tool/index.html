@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Layout Tool</title>
+<style>
+  :root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-secondary: #888;
+    --border: #e0e0e0;
+    --accent: #1a1a1a;
+    --accent-fg: #ffffff;
+    --btn-hover: #f0f0f0;
+    --placeholder: #e8e8e8;
+    --gap: 6px;
+    --radius: 4px;
+    --preview-max-width: 900px;
+  }
+
+  body.dark {
+    --bg: #151517;
+    --surface: #1c1c1e;
+    --text: #f0f0f0;
+    --text-secondary: #8e8e93;
+    --border: #2c2c2e;
+    --accent: #f0f0f0;
+    --accent-fg: #151517;
+    --btn-hover: #2a2a2c;
+    --placeholder: #2a2a2c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 300ms ease;
+  }
+
+  /* ─── Top Bar ─────────────────────────────────────────────── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .topbar h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .project-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 150ms, border-color 150ms;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--btn-hover); }
+  .btn svg { width: 14px; height: 14px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent); opacity: 0.85; }
+
+  .btn-danger {
+    color: #d9534f;
+    border-color: rgba(217, 83, 79, 0.4);
+  }
+  .btn-danger:hover { background: rgba(217, 83, 79, 0.08); border-color: #d9534f; }
+
+  /* ─── Drop Zone ───────────────────────────────────────────── */
+  .drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 60px 40px;
+    margin: 24px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: border-color 200ms, background 200ms;
+    cursor: pointer;
+  }
+  .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(128,128,128,0.05);
+  }
+  .drop-zone svg { width: 32px; height: 32px; opacity: 0.4; }
+  .drop-zone p { text-align: center; }
+  .drop-zone .hint { font-size: 11px; color: var(--text-secondary); opacity: 0.7; }
+  .drop-zone-btns { display: flex; gap: 8px; }
+
+  input[type="file"] { display: none; }
+
+  /* ─── Layout Area ─────────────────────────────────────────── */
+  .layout-area {
+    max-width: var(--preview-max-width);
+    margin: 24px auto;
+    padding: 0 24px;
+  }
+
+  .row {
+    display: grid;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+    position: relative;
+  }
+
+  /* 2-col grid chunks (site layout:"grid" preview) */
+  .grid-chunk {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+    align-items: start;
+  }
+
+  .img-cell {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: grab;
+    background: var(--placeholder);
+  }
+  .img-cell:active { cursor: grabbing; }
+  .img-cell.dragging { opacity: 0.3; }
+
+  .img-cell img,
+  .img-cell video {
+    width: 100%;
+    height: auto;
+    display: block;
+    -webkit-user-drag: none;
+    pointer-events: none;
+  }
+
+  .img-cell .type-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .img-cell .cell-actions {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+  .img-cell:hover .cell-actions { opacity: 1; }
+
+  .cell-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 150ms;
+    backdrop-filter: blur(8px);
+  }
+  .cell-btn:hover { background: rgba(0,0,0,0.75); }
+  .cell-btn svg { width: 12px; height: 12px; }
+
+  .img-cell .cell-number {
+    position: absolute;
+    bottom: 6px;
+    left: 6px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+  }
+
+  .img-cell .cell-meta {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+  .img-cell:hover .cell-meta { opacity: 1; }
+
+  /* ─── Row Drop Targets ────────────────────────────────────── */
+  .row-drop-target {
+    height: 4px;
+    margin: 0 0 var(--gap) 0;
+    border-radius: 2px;
+    transition: height 200ms, background 200ms, margin 200ms;
+  }
+  .row-drop-target.active {
+    height: 40px;
+    background: rgba(128,128,128,0.08);
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    margin: 8px 0;
+  }
+
+  .img-cell .split-indicator {
+    position: absolute;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+  }
+  .img-cell .split-indicator.left { left: 0; }
+  .img-cell .split-indicator.right { right: 0; }
+
+  /* ─── Export Panel ─────────────────────────────────────────── */
+  .export-panel {
+    position: fixed;
+    top: 0;
+    right: -440px;
+    width: 440px;
+    height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    transition: right 300ms cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  }
+  .export-panel.open { right: 0; }
+
+  .export-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .export-header h2 { font-size: 14px; font-weight: 600; }
+
+  .export-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .export-field label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .export-field input, .export-field select, .export-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .export-field input:focus, .export-field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .export-field textarea.desc-input {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  .export-field textarea.snippet-output {
+    min-height: 200px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+
+  .export-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .export-check input { width: auto; }
+
+  .export-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .export-footer .btn { flex: 1; justify-content: center; }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.2);
+    z-index: 190;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 300ms;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  /* ─── Toast ───────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--accent);
+    color: var(--accent-fg);
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    transition: transform 400ms cubic-bezier(0.16, 1, 0.3, 1), opacity 400ms;
+    pointer-events: none;
+    z-index: 600;
+    max-width: 80vw;
+    text-align: center;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ─── Config bar ──────────────────────────────────────────── */
+  .config-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .config-bar .stat { display: flex; align-items: center; gap: 4px; }
+  .config-bar .stat strong { color: var(--text); font-weight: 600; }
+
+  .config-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .theme-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 150ms;
+    padding: 0;
+  }
+  .theme-btn:hover { background: var(--btn-hover); }
+  .theme-btn svg { width: 14px; height: 14px; }
+
+  .layout-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .layout-toggle button {
+    padding: 5px 12px;
+    font-size: 11px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 150ms, color 150ms;
+  }
+  .layout-toggle button.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .layout-toggle button:hover:not(.active) { background: var(--btn-hover); }
+
+  /* ─── Cover Section ───────────────────────────────────────── */
+  .cover-section {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .cover-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  .cover-preview-wrap {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--placeholder);
+    overflow: hidden;
+  }
+
+  .cover-preview-wrap.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .cover-preview-wrap img { position: absolute; }
+  .cover-preview-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-source-btns {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .cover-source-btns .btn { font-size: 10px; padding: 4px 10px; }
+
+  /* ─── Crop modal ──────────────────────────────────────────── */
+  .crop-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .crop-modal-overlay.open { display: flex; }
+
+  .crop-modal {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 90vw;
+    max-width: 700px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .crop-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .crop-modal-header h3 { font-size: 14px; font-weight: 600; }
+
+  .crop-canvas-wrap {
+    position: relative;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    overflow: hidden;
+    cursor: grab;
+  }
+  .crop-canvas-wrap:active { cursor: grabbing; }
+  .crop-canvas-wrap canvas { display: block; }
+
+  .crop-frame {
+    position: absolute;
+    border: 2px solid rgba(255,255,255,0.8);
+    border-radius: var(--radius);
+    pointer-events: none;
+  }
+
+  .crop-modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .crop-modal-controls input[type="range"] {
+    flex: 1;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  .crop-modal-controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: grab;
+  }
+
+  .crop-modal-controls .zoom-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    min-width: 35px;
+  }
+
+  /* ─── Arrange Panel (full-screen split view) ──────────────── */
+  .arrange-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: var(--surface);
+    transform: translateY(100%);
+    transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+  }
+  .arrange-panel.open { transform: translateY(0); }
+
+  .arrange-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .arrange-header h3 { font-size: 13px; font-weight: 600; }
+  .arrange-header .arrange-hint { font-size: 11px; color: var(--text-secondary); }
+
+  .arrange-split {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .arrange-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    min-width: 0;
+  }
+
+  /* Live mini-preview of the whole project */
+  .arrange-preview {
+    width: 380px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+    overflow-y: auto;
+    padding: 20px;
+  }
+
+  .arrange-preview-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .ap-row {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 2px;
+    position: relative;
+    border-radius: 2px;
+    transition: outline-color 150ms;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  .ap-row.highlight { outline-color: var(--accent); }
+
+  .ap-row img,
+  .ap-row video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .ap-row .ap-num {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 100px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .ap-chunk {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin-bottom: 2px;
+    align-items: start;
+  }
+  .ap-chunk .ap-row { margin-bottom: 0; }
+
+  .arrange-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 80px;
+    position: relative;
+  }
+
+  .arrange-row-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    min-width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .arrange-row-items {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    flex-wrap: wrap;
+    min-height: 78px;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px dashed transparent;
+    transition: border-color 150ms, background 150ms;
+  }
+  .arrange-row-items.drag-over {
+    border-color: var(--accent);
+    background: rgba(128,128,128,0.08);
+  }
+  /* While a drag is in progress, show every row as a faint drop target */
+  .arrange-body.dragging-active .arrange-row-items {
+    border-color: var(--border);
+  }
+
+  .arrange-thumb {
+    position: relative;
+    width: 96px;
+    height: 72px;
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: grab;
+    flex-shrink: 0;
+    background: var(--placeholder);
+    border: 2px solid transparent;
+    transition: border-color 150ms, opacity 150ms;
+  }
+  .arrange-thumb:active { cursor: grabbing; }
+  .arrange-thumb.dragging { opacity: 0.3; }
+  .arrange-thumb.drag-left { box-shadow: -4px 0 0 0 var(--accent); }
+  .arrange-thumb.drag-right { box-shadow: 4px 0 0 0 var(--accent); }
+
+  .arrange-thumb img,
+  .arrange-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .arrange-thumb .thumb-type {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 7px;
+    font-weight: 700;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    padding: 1px 3px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+
+  .arrange-thumb .thumb-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .arrange-thumb:hover .thumb-remove { display: flex; }
+
+  .arrange-row-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .arrange-row-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 150ms, color 150ms;
+  }
+  .arrange-row-btn:hover { background: var(--btn-hover); color: var(--text); }
+  .arrange-row-btn:disabled { opacity: 0.3; cursor: default; }
+  .arrange-row-btn svg { width: 12px; height: 12px; }
+
+  .arrange-drop-between {
+    height: 6px;
+    margin: -4px 0;
+    border-radius: 4px;
+    border: 1px dashed transparent;
+    transition: height 150ms, background 150ms, border-color 150ms;
+    position: relative;
+    z-index: 2;
+  }
+  /* All between-row zones become visible, generous targets during a drag */
+  .arrange-body.dragging-active .arrange-drop-between {
+    height: 28px;
+    margin: 2px 0;
+    border-color: var(--border);
+    background: rgba(128,128,128,0.04);
+  }
+  .arrange-body.dragging-active .arrange-drop-between.active,
+  .arrange-drop-between.active {
+    height: 36px;
+    margin: 2px 0;
+    border-color: var(--accent);
+    background: rgba(128,128,128,0.12);
+  }
+
+  /* ─── Lightbox ────────────────────────────────────────────── */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox img, .lightbox video {
+    max-width: 92vw;
+    max-height: 92vh;
+    border-radius: var(--radius);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1>Project Layout</h1>
+    <span class="project-name" id="projectName"></span>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn" id="importFolderBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Import Folder
+    </button>
+    <button class="btn" id="addMoreBtn" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Files
+    </button>
+    <button class="btn" id="arrangeBtn" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Arrange
+    </button>
+    <button class="btn btn-danger" id="clearBtn" style="display:none;">Clear All</button>
+    <button class="btn btn-primary" id="exportBtn" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export
+    </button>
+  </div>
+</div>
+
+<div class="config-bar" id="configBar" style="display:none;">
+  <span class="stat"><strong id="imageCount">0</strong>&nbsp;files</span>
+  <span class="stat"><strong id="rowCount">0</strong>&nbsp;rows</span>
+  <span class="stat"><strong id="totalSize">0 MB</strong></span>
+  <div class="config-right">
+    <button class="theme-btn" id="themeBtn" title="Toggle dark preview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <div class="layout-toggle">
+      <button class="active" data-layout="stack">Stack</button>
+      <button data-layout="grid">2-Col Grid</button>
+    </div>
+  </div>
+</div>
+
+<div id="dropZone" class="drop-zone">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+  <p>Drop files here — or drop a whole project folder</p>
+  <p class="hint">A folder like images/projects/02 imports with the exact site layout:<br>numbered files, subfolder grid rows and cover included</p>
+  <div class="drop-zone-btns">
+    <button class="btn" id="dzBrowseBtn">Browse Files</button>
+    <button class="btn" id="dzFolderBtn">Import Project Folder</button>
+  </div>
+</div>
+
+<input type="file" id="fileInput" multiple accept="image/*,video/mp4,video/quicktime,.gif">
+<input type="file" id="folderInput" webkitdirectory directory>
+
+<div class="layout-area" id="layoutArea"></div>
+
+<!-- Export Panel -->
+<div class="overlay" id="overlay"></div>
+<div class="export-panel" id="exportPanel">
+  <div class="export-header">
+    <h2>Export Project</h2>
+    <button class="btn" id="closeExport">Close</button>
+  </div>
+  <div class="export-body">
+    <!-- Cover Section -->
+    <div class="cover-section">
+      <div class="cover-section-header">
+        <span>Cover Preview (4:3)</span>
+        <button class="btn" id="coverEditBtn" style="font-size:10px;padding:3px 10px;">Edit Crop</button>
+      </div>
+      <div class="cover-preview-wrap empty" id="coverPreview">
+        Click to choose a cover source
+      </div>
+      <div class="cover-source-btns" id="coverSourceBtns">
+        <button class="btn" id="coverUploadBtn">Upload</button>
+        <button class="btn" id="coverFromFirstBtn">Use First Image</button>
+      </div>
+    </div>
+    <input type="file" id="coverFileInput" accept="image/*,video/mp4,.gif">
+
+    <div class="export-field">
+      <label>Project Title</label>
+      <input type="text" id="exportTitle" placeholder="e.g. F1 – Team Merch">
+    </div>
+    <div class="export-field">
+      <label>Folder Number</label>
+      <input type="text" id="exportFolder" placeholder="e.g. 07">
+    </div>
+    <div class="export-field">
+      <label>Cover Color (hex)</label>
+      <input type="text" id="exportColor" placeholder="#E8E0D5" value="#E8E0D5">
+    </div>
+    <div class="export-field">
+      <label>Year</label>
+      <input type="text" id="exportYear" placeholder="e.g. 2026 or 2025–2026">
+    </div>
+    <div class="export-field">
+      <label>Description <span style="text-transform:none;letter-spacing:0;">(blank line = new paragraph)</span></label>
+      <textarea class="desc-input" id="exportDesc" placeholder="Short project description"></textarea>
+    </div>
+    <div class="export-check">
+      <input type="checkbox" id="exportWip">
+      <label for="exportWip" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--text);">Mark as WIP (coming soon page)</label>
+    </div>
+    <div class="export-field">
+      <label>content.js Snippet</label>
+      <textarea class="snippet-output" id="snippetOutput" readonly></textarea>
+    </div>
+  </div>
+  <div class="export-footer">
+    <button class="btn" id="copySnippetBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy Snippet
+    </button>
+    <button class="btn" id="saveFolderBtn" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Save to Folder
+    </button>
+    <button class="btn btn-primary" id="downloadBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download ZIP
+    </button>
+  </div>
+</div>
+
+<!-- Crop Modal -->
+<div class="crop-modal-overlay" id="cropOverlay">
+  <div class="crop-modal">
+    <div class="crop-modal-header">
+      <h3>Crop Cover</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="cropCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="cropApplyBtn">Apply</button>
+      </div>
+    </div>
+    <div class="crop-canvas-wrap" id="cropCanvasWrap">
+      <canvas id="cropCanvas"></canvas>
+      <div class="crop-frame" id="cropFrame"></div>
+    </div>
+    <div class="crop-modal-controls">
+      <span class="zoom-label" id="cropZoomLabel">100%</span>
+      <input type="range" id="cropZoomSlider" min="100" max="400" value="100">
+    </div>
+  </div>
+</div>
+
+<!-- Arrange Panel (full-screen split view) -->
+<div class="arrange-panel" id="arrangePanel">
+  <div class="arrange-header">
+    <h3>Arrange</h3>
+    <span class="arrange-hint">Drag thumbnails to reorder — drop onto a row to group — hover to locate in the preview</span>
+    <button class="btn" id="closeArrangeBtn">Done</button>
+  </div>
+  <div class="arrange-split">
+    <div class="arrange-body" id="arrangeBody"></div>
+    <div class="arrange-preview" id="arrangePreview"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+ * STATE
+ * rows = [ [item], [item, item], ... ]  — one entry per numbered
+ * slot, multi-item rows export as NN/01, NN/02 subfolders exactly
+ * like the site reads them.
+ * ================================================================ */
+let rows = [];
+let nextId = 0;
+let layoutMode = "stack";        // view/export flag — matches site layout:"grid"
+let dragItem = null;
+let dragSourceRow = null;
+let dragSourceIdx = null;
+
+const itemsById = new Map();     // registry for undo/redo
+
+// Cover: crop stored resolution-independent
+// cx, cy = crop-window centre as fraction of source dims; zoom >= 1
+let coverSource = null;          // { url, file, type, naturalWidth, naturalHeight }
+let coverCrop = { cx: 0.5, cy: 0.5, zoom: 1 };
+
+const layoutArea = document.getElementById("layoutArea");
+const dropZone = document.getElementById("dropZone");
+const fileInput = document.getElementById("fileInput");
+const folderInput = document.getElementById("folderInput");
+const addMoreBtn = document.getElementById("addMoreBtn");
+const importFolderBtn = document.getElementById("importFolderBtn");
+const clearBtn = document.getElementById("clearBtn");
+const exportBtn = document.getElementById("exportBtn");
+const arrangeBtn = document.getElementById("arrangeBtn");
+const arrangePanel = document.getElementById("arrangePanel");
+const arrangeBody = document.getElementById("arrangeBody");
+const configBar = document.getElementById("configBar");
+const imageCountEl = document.getElementById("imageCount");
+const rowCountEl = document.getElementById("rowCount");
+const totalSizeEl = document.getElementById("totalSize");
+const exportPanel = document.getElementById("exportPanel");
+const overlay = document.getElementById("overlay");
+const toastEl = document.getElementById("toast");
+const projectNameEl = document.getElementById("projectName");
+const lightbox = document.getElementById("lightbox");
+
+/* ================================================================
+ * UNDO / REDO — snapshots of row structure by item id
+ * ================================================================ */
+let history = [[]];
+let histIdx = 0;
+
+function snapshot() {
+  history = history.slice(0, histIdx + 1);
+  history.push(rows.map(r => r.map(it => it.id)));
+  if (history.length > 60) history.shift();
+  histIdx = history.length - 1;
+}
+
+function restoreSnapshot(idx) {
+  const snap = history[idx];
+  rows = snap
+    .map(r => r.map(id => itemsById.get(id)).filter(Boolean))
+    .filter(r => r.length);
+  histIdx = idx;
+  render();
+  updateUI();
+}
+
+function undo() { if (histIdx > 0) restoreSnapshot(histIdx - 1); }
+function redo() { if (histIdx < history.length - 1) restoreSnapshot(histIdx + 1); }
+
+// Call after every structural mutation
+function commit() {
+  snapshot();
+  render();
+  updateUI();
+}
+
+/* ================================================================
+ * FILE TYPE HELPERS
+ * ================================================================ */
+function getFileType(file) {
+  const n = (file.name || "").toLowerCase();
+  if (file.type === "video/mp4" || file.type === "video/quicktime" || n.endsWith(".mp4") || n.endsWith(".mov")) return "video";
+  if (file.type === "image/gif" || n.endsWith(".gif")) return "gif";
+  return "image";
+}
+
+function getFileExt(file) {
+  const type = getFileType(file);
+  if (type === "video") return "mp4";
+  if (type === "gif") return "gif";
+  const ext = (file.name || "").split(".").pop().toLowerCase();
+  return ["webp", "jpg", "jpeg", "png"].includes(ext) ? ext : "webp";
+}
+
+function fmtSize(bytes) {
+  if (!bytes) return "0 MB";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+// Load a File into an item (dims resolved async)
+function loadItemFromFile(f) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(f);
+    const type = getFileType(f);
+
+    if (type === "video") {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        const item = { id: nextId++, file: f, url, naturalWidth: video.videoWidth, naturalHeight: video.videoHeight, type };
+        itemsById.set(item.id, item);
+        resolve(item);
+      };
+      video.onerror = () => resolve(null);
+      video.src = url;
+    } else {
+      const img = new Image();
+      img.onload = () => {
+        const item = { id: nextId++, file: f, url, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight, type };
+        itemsById.set(item.id, item);
+        resolve(item);
+      };
+      img.onerror = () => resolve(null);
+      img.src = url;
+    }
+  });
+}
+
+/* ================================================================
+ * FILE / FOLDER INPUT
+ * ================================================================ */
+dropZone.addEventListener("click", e => {
+  if (e.target.closest("#dzFolderBtn")) return;
+  fileInput.click();
+});
+document.getElementById("dzBrowseBtn").addEventListener("click", e => { e.stopPropagation(); fileInput.click(); });
+document.getElementById("dzFolderBtn").addEventListener("click", e => { e.stopPropagation(); folderInput.click(); });
+addMoreBtn.addEventListener("click", () => fileInput.click());
+importFolderBtn.addEventListener("click", () => folderInput.click());
+
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("drag-over");
+  handleDropEvent(e);
+});
+
+fileInput.addEventListener("change", e => {
+  handleFiles(e.target.files);
+  fileInput.value = "";
+});
+
+folderInput.addEventListener("change", e => {
+  const files = Array.from(e.target.files);
+  folderInput.value = "";
+  if (!files.length) return;
+  const rootName = (files[0].webkitRelativePath || "").split("/")[0] || "";
+  const entries = files.map(f => ({
+    relPath: (f.webkitRelativePath || f.name).split("/").slice(1).join("/"),
+    file: f
+  }));
+  confirmReplaceThen(() => importProject(entries, rootName));
+});
+
+function confirmReplaceThen(fn) {
+  if (rows.length && !confirm("Replace the current layout with the imported folder?")) return;
+  fn();
+}
+
+// Unified drop: single folder → project import, otherwise files
+function handleDropEvent(e) {
+  const items = Array.from(e.dataTransfer.items || []);
+  const entries = items
+    .map(i => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null))
+    .filter(Boolean);
+  const dirs = entries.filter(en => en.isDirectory);
+
+  if (dirs.length === 1 && entries.length === 1) {
+    const dirEntry = dirs[0];
+    collectDirEntries(dirEntry).then(collected => {
+      confirmReplaceThen(() => importProject(collected, dirEntry.name));
+    });
+    return;
+  }
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+}
+
+// Recursively read a dropped directory → [{relPath, file}] relative to inside it
+function collectDirEntries(dirEntry) {
+  const out = [];
+  function walk(entry, prefix) {
+    return new Promise(resolve => {
+      if (entry.isFile) {
+        entry.file(f => { out.push({ relPath: prefix + entry.name, file: f }); resolve(); }, () => resolve());
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const acc = [];
+        const readBatch = () => reader.readEntries(batch => {
+          if (!batch.length) {
+            Promise.all(acc.map(en => walk(en, prefix + entry.name + "/"))).then(resolve);
+          } else {
+            acc.push(...batch);
+            readBatch();
+          }
+        }, () => resolve());
+        readBatch();
+      } else resolve();
+    });
+  }
+  return new Promise(resolve => {
+    const reader = dirEntry.createReader();
+    const acc = [];
+    const readBatch = () => reader.readEntries(batch => {
+      if (!batch.length) {
+        Promise.all(acc.map(en => walk(en, ""))).then(() => resolve(out));
+      } else {
+        acc.push(...batch);
+        readBatch();
+      }
+    }, () => resolve(out));
+    readBatch();
+  });
+}
+
+// Plain files → each becomes its own row (appended)
+function handleFiles(files) {
+  const valid = Array.from(files).filter(f =>
+    f.type.startsWith("image/") || getFileType(f) === "video" || (f.name || "").toLowerCase().endsWith(".gif")
+  );
+  if (!valid.length) return;
+
+  Promise.all(valid.map(loadItemFromFile)).then(items => {
+    items.filter(Boolean).forEach(item => rows.push([item]));
+    commit();
+  });
+}
+
+/* ================================================================
+ * PROJECT FOLDER IMPORT — mirrors the site's loader:
+ *  - NN/ subfolder with numbered files → grid row (folder wins)
+ *  - NN_player.mp4 preferred over NN.mp4, then image extensions
+ *  - cover.* → cover source
+ *  - anything else (_originals, .DS_Store …) ignored
+ *  - site stops at the first numbering gap → we import everything
+ *    but warn so you can fix the numbering
+ * ================================================================ */
+const RE_SINGLE = /^(\d{1,3})(_player)?\.(webp|jpe?g|png|gif|mp4|mov)$/i;
+const RE_SUB    = /^(\d{1,3})\/(\d{1,3})\.(webp|jpe?g|png|gif|mp4|mov)$/i;
+const RE_COVER  = /^cover\.(webp|jpe?g|png|gif|mp4|mov)$/i;
+
+async function importProject(entries, rootName) {
+  const singles = new Map();   // num → file
+  const groups = new Map();    // num → Map(innerNum → file)
+  let coverFile = null;
+
+  for (const { relPath, file } of entries) {
+    const p = relPath.replace(/\\/g, "/");
+    if (RE_COVER.test(p)) { coverFile = file; continue; }
+
+    let m = p.match(RE_SUB);
+    if (m) {
+      const n = parseInt(m[1]), inner = parseInt(m[2]);
+      if (!groups.has(n)) groups.set(n, new Map());
+      groups.get(n).set(inner, file);
+      continue;
+    }
+
+    m = p.match(RE_SINGLE);
+    if (m) {
+      const n = parseInt(m[1]);
+      const isPlayer = !!m[2];
+      const existing = singles.get(n);
+      // Site prefers NN_player.mp4 over NN.mp4
+      if (!existing || (isPlayer && getFileType(existing) === "video")) singles.set(n, file);
+      else if (!isPlayer && !existing) singles.set(n, file);
+    }
+  }
+
+  const nums = [...new Set([...singles.keys(), ...groups.keys()])].sort((a, b) => a - b);
+  if (!nums.length && !coverFile) {
+    showToast("No numbered files found in that folder");
+    return;
+  }
+
+  // Gap check — the site stops loading at the first missing number
+  let gapAt = null;
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] !== i + 1) { gapAt = i + 1; break; }
+  }
+
+  showToast("Importing…");
+
+  const newRows = [];
+  for (const n of nums) {
+    if (groups.has(n)) {
+      const inner = [...groups.get(n).entries()].sort((a, b) => a[0] - b[0]).map(e => e[1]);
+      const items = (await Promise.all(inner.map(loadItemFromFile))).filter(Boolean);
+      if (items.length) newRows.push(items);
+    } else {
+      const item = await loadItemFromFile(singles.get(n));
+      if (item) newRows.push([item]);
+    }
+  }
+
+  rows = newRows;
+
+  if (coverFile) {
+    const c = await loadItemFromFile(coverFile);
+    if (c) {
+      coverSource = { url: c.url, file: c.file, type: c.type, naturalWidth: c.naturalWidth, naturalHeight: c.naturalHeight };
+      coverCrop = { cx: 0.5, cy: 0.5, zoom: 1 };
+    }
+  }
+
+  if (rootName) {
+    projectNameEl.textContent = "— " + rootName;
+    if (/^\d+$/.test(rootName)) document.getElementById("exportFolder").value = rootName;
+  }
+
+  commit();
+
+  const total = rows.reduce((s, r) => s + r.length, 0);
+  if (gapAt !== null) {
+    showToast(`Imported ${total} files — heads up: numbering gap before ${String(gapAt).padStart(2, "0")} (site stops there)`, 4500);
+  } else {
+    showToast(`Imported ${total} files in ${rows.length} rows${coverFile ? " + cover" : ""}`);
+  }
+}
+
+/* ================================================================
+ * UI UPDATES
+ * ================================================================ */
+function updateUI() {
+  const total = rows.reduce((sum, r) => sum + r.length, 0);
+  const hasItems = total > 0;
+
+  dropZone.style.display = hasItems ? "none" : "";
+  configBar.style.display = hasItems ? "" : "none";
+  addMoreBtn.style.display = hasItems ? "" : "none";
+  arrangeBtn.style.display = hasItems ? "" : "none";
+  clearBtn.style.display = hasItems ? "" : "none";
+  exportBtn.style.display = hasItems ? "" : "none";
+
+  imageCountEl.textContent = total;
+  rowCountEl.textContent = rows.length;
+
+  const bytes = rows.flat().reduce((s, it) => s + ((it.file && it.file.size) || 0), 0);
+  totalSizeEl.textContent = fmtSize(bytes);
+
+  if (arrangePanel.classList.contains("open")) renderArrange();
+}
+
+let toastTimer = null;
+function showToast(msg, ms = 2200) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), ms);
+}
+
+/* ================================================================
+ * THEME + LAYOUT TOGGLES
+ * ================================================================ */
+document.getElementById("themeBtn").addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+});
+
+document.querySelectorAll(".layout-toggle button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".layout-toggle button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    layoutMode = btn.dataset.layout;   // view flag only — rows untouched (site semantics)
+    render();
+    generateSnippet();
+  });
+});
+
+/* ================================================================
+ * RENDER — stack: every row full-width; grid: consecutive single
+ * rows flow into a 2-col grid (site layout:"grid"), grouped rows
+ * always render as ratio-sized full-width rows.
+ * ================================================================ */
+function render() {
+  layoutArea.innerHTML = "";
+  let globalIdx = 1;
+  let chunk = null;   // current 2-col grid container (grid mode)
+
+  rows.forEach((row, rowIndex) => {
+    const isGroup = row.length > 1;
+    const rowNum = String(globalIdx).padStart(2, "0");
+
+    const useChunk = layoutMode === "grid" && !isGroup;
+
+    if (!useChunk) {
+      chunk = null;
+      // Drop target before full-width rows
+      const dt = document.createElement("div");
+      dt.className = "row-drop-target";
+      setupRowDropTarget(dt, rowIndex);
+      layoutArea.appendChild(dt);
+    } else if (!chunk) {
+      const dt = document.createElement("div");
+      dt.className = "row-drop-target";
+      setupRowDropTarget(dt, rowIndex);
+      layoutArea.appendChild(dt);
+      chunk = document.createElement("div");
+      chunk.className = "grid-chunk";
+      layoutArea.appendChild(chunk);
+    }
+
+    if (useChunk) {
+      const cell = buildCell(row[0], rowIndex, 0, rowNum, false);
+      chunk.appendChild(cell);
+    } else {
+      const rowEl = document.createElement("div");
+      rowEl.className = "row";
+      if (isGroup) {
+        const ratios = row.map(item => item.naturalWidth / item.naturalHeight);
+        rowEl.style.gridTemplateColumns = ratios.map(r => r + "fr").join(" ");
+      } else {
+        rowEl.style.gridTemplateColumns = "1fr";
+      }
+      row.forEach((item, cellIndex) => {
+        rowEl.appendChild(buildCell(item, rowIndex, cellIndex, rowNum, isGroup));
+      });
+      layoutArea.appendChild(rowEl);
+    }
+
+    globalIdx++;
+  });
+
+  const finalDrop = document.createElement("div");
+  finalDrop.className = "row-drop-target";
+  setupRowDropTarget(finalDrop, rows.length);
+  layoutArea.appendChild(finalDrop);
+}
+
+function buildCell(item, rowIndex, cellIndex, rowNum, isGroup) {
+  const cell = document.createElement("div");
+  cell.className = "img-cell";
+  cell.draggable = true;
+  cell.dataset.rowIndex = rowIndex;
+  cell.dataset.cellIndex = cellIndex;
+
+  if (item.type === "video") {
+    const vid = document.createElement("video");
+    vid.src = item.url;
+    vid.autoplay = true;
+    vid.muted = true;
+    vid.loop = true;
+    vid.playsInline = true;
+    cell.appendChild(vid);
+    const badge = document.createElement("span");
+    badge.className = "type-badge";
+    badge.textContent = "MP4";
+    cell.appendChild(badge);
+  } else {
+    const img = document.createElement("img");
+    img.src = item.url;
+    cell.appendChild(img);
+    if (item.type === "gif") {
+      const badge = document.createElement("span");
+      badge.className = "type-badge";
+      badge.textContent = "GIF";
+      cell.appendChild(badge);
+    }
+  }
+
+  const numBadge = document.createElement("span");
+  numBadge.className = "cell-number";
+  numBadge.textContent = isGroup
+    ? `${rowNum}/${String(cellIndex + 1).padStart(2, "0")}`
+    : rowNum;
+  cell.appendChild(numBadge);
+
+  // dims + size on hover
+  const meta = document.createElement("span");
+  meta.className = "cell-meta";
+  const sz = item.file && item.file.size ? " · " + fmtSize(item.file.size) : "";
+  meta.textContent = `${item.naturalWidth}×${item.naturalHeight}${sz}`;
+  cell.appendChild(meta);
+
+  const actions = document.createElement("div");
+  actions.className = "cell-actions";
+
+  if (isGroup) {
+    const ungroupBtn = document.createElement("button");
+    ungroupBtn.className = "cell-btn";
+    ungroupBtn.title = "Ungroup";
+    ungroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>`;
+    ungroupBtn.addEventListener("click", e => { e.stopPropagation(); ungroupRow(rowIndex); });
+    actions.appendChild(ungroupBtn);
+  }
+
+  const coverBtn = document.createElement("button");
+  coverBtn.className = "cell-btn";
+  coverBtn.title = "Use as cover";
+  coverBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+  coverBtn.addEventListener("click", e => { e.stopPropagation(); setCoverFromItem(item); });
+  actions.appendChild(coverBtn);
+
+  const delBtn = document.createElement("button");
+  delBtn.className = "cell-btn";
+  delBtn.title = "Remove";
+  delBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+  delBtn.addEventListener("click", e => { e.stopPropagation(); removeImage(rowIndex, cellIndex); });
+  actions.appendChild(delBtn);
+
+  cell.appendChild(actions);
+
+  const splitLeft = document.createElement("div");
+  splitLeft.className = "split-indicator left";
+  cell.appendChild(splitLeft);
+  const splitRight = document.createElement("div");
+  splitRight.className = "split-indicator right";
+  cell.appendChild(splitRight);
+
+  setupCellDrag(cell, rowIndex, cellIndex);
+
+  // Lightbox on double-click (like clicking an image on the site)
+  cell.addEventListener("dblclick", () => openLightbox(item));
+
+  return cell;
+}
+
+/* ================================================================
+ * LIGHTBOX
+ * ================================================================ */
+function openLightbox(item) {
+  lightbox.innerHTML = "";
+  let el;
+  if (item.type === "video") {
+    el = document.createElement("video");
+    el.src = item.url;
+    el.autoplay = true;
+    el.muted = true;
+    el.loop = true;
+    el.playsInline = true;
+  } else {
+    el = document.createElement("img");
+    el.src = item.url;
+  }
+  lightbox.appendChild(el);
+  lightbox.classList.add("open");
+}
+lightbox.addEventListener("click", () => lightbox.classList.remove("open"));
+
+/* ================================================================
+ * DRAG & DROP — main canvas
+ * ================================================================ */
+function setupRowDropTarget(el, beforeRow) {
+  el.addEventListener("dragover", e => {
+    if (!dragItem) return;
+    e.preventDefault();
+    el.classList.add("active");
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("active"));
+  el.addEventListener("drop", e => {
+    e.preventDefault();
+    el.classList.remove("active");
+    if (!dragItem) return;
+
+    const srcRow = rows[dragSourceRow];
+    srcRow.splice(dragSourceIdx, 1);
+    if (srcRow.length === 0) rows.splice(dragSourceRow, 1);
+
+    let targetRow = beforeRow;
+    if (dragSourceRow < beforeRow && srcRow.length === 0) targetRow--;
+
+    rows.splice(targetRow, 0, [dragItem]);
+    dragItem = null;
+    commit();
+  });
+}
+
+function setupCellDrag(cell, rowIndex, cellIndex) {
+  cell.addEventListener("dragstart", e => {
+    dragItem = rows[rowIndex][cellIndex];
+    dragSourceRow = rowIndex;
+    dragSourceIdx = cellIndex;
+    cell.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    const canvas = document.createElement("canvas");
+    canvas.width = 1; canvas.height = 1;
+    e.dataTransfer.setDragImage(canvas, 0, 0);
+  });
+
+  cell.addEventListener("dragend", () => {
+    cell.classList.remove("dragging");
+    dragItem = null;
+    clearAllIndicators();
+  });
+
+  cell.addEventListener("dragover", e => {
+    if (!dragItem) return;
+    e.preventDefault();
+    clearAllIndicators();
+    const rect = cell.getBoundingClientRect();
+    if (e.clientX - rect.left < rect.width / 2) {
+      cell.querySelector(".split-indicator.left").style.display = "block";
+    } else {
+      cell.querySelector(".split-indicator.right").style.display = "block";
+    }
+  });
+
+  cell.addEventListener("dragleave", () => {
+    cell.querySelector(".split-indicator.left").style.display = "none";
+    cell.querySelector(".split-indicator.right").style.display = "none";
+  });
+
+  cell.addEventListener("drop", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    clearAllIndicators();
+    if (!dragItem) return;
+
+    const targetRowIdx = parseInt(cell.dataset.rowIndex);
+    const targetCellIdx = parseInt(cell.dataset.cellIndex);
+    if (targetRowIdx === dragSourceRow && targetCellIdx === dragSourceIdx) { dragItem = null; return; }
+
+    const rect = cell.getBoundingClientRect();
+    const insertBefore = (e.clientX - rect.left) < rect.width / 2;
+
+    const srcRow = rows[dragSourceRow];
+    const item = srcRow.splice(dragSourceIdx, 1)[0];
+    if (srcRow.length === 0) rows.splice(dragSourceRow, 1);
+
+    let adjRowIdx = targetRowIdx;
+    if (dragSourceRow < targetRowIdx && srcRow.length === 0) adjRowIdx--;
+    let adjCellIdx = targetCellIdx;
+    if (dragSourceRow === targetRowIdx && dragSourceIdx < targetCellIdx) adjCellIdx--;
+
+    const targetRow = rows[adjRowIdx];
+    targetRow.splice(insertBefore ? adjCellIdx : adjCellIdx + 1, 0, item);
+
+    dragItem = null;
+    commit();
+  });
+}
+
+function clearAllIndicators() {
+  document.querySelectorAll(".split-indicator").forEach(el => el.style.display = "none");
+  document.querySelectorAll(".row-drop-target").forEach(el => el.classList.remove("active"));
+}
+
+/* ================================================================
+ * ACTIONS
+ * ================================================================ */
+function removeImage(rowIdx, cellIdx) {
+  // URL kept alive so undo can restore the item
+  rows[rowIdx].splice(cellIdx, 1);
+  if (rows[rowIdx].length === 0) rows.splice(rowIdx, 1);
+  commit();
+}
+
+function ungroupRow(rowIdx) {
+  const row = rows[rowIdx];
+  rows.splice(rowIdx, 1, ...row.map(img => [img]));
+  commit();
+}
+
+clearBtn.addEventListener("click", () => {
+  if (!confirm("Remove all files?")) return;
+  rows.flat().forEach(img => URL.revokeObjectURL(img.url));
+  itemsById.clear();
+  rows = [];
+  nextId = 0;
+  history = [[]];
+  histIdx = 0;
+  projectNameEl.textContent = "";
+  render();
+  updateUI();
+});
+
+layoutArea.addEventListener("dragover", e => { if (!dragItem) e.preventDefault(); });
+layoutArea.addEventListener("drop", e => {
+  if (dragItem) return;
+  e.preventDefault();
+  handleDropEvent(e);
+});
+
+/* ================================================================
+ * COVER — crop stored as { cx, cy, zoom } in source fractions
+ * ================================================================ */
+const coverPreview = document.getElementById("coverPreview");
+const coverFileInput = document.getElementById("coverFileInput");
+const FRAME_AR = 4 / 3;
+
+function setCoverFromItem(item) {
+  coverSource = { url: item.url, file: item.file, type: item.type, naturalWidth: item.naturalWidth, naturalHeight: item.naturalHeight };
+  coverCrop = { cx: 0.5, cy: 0.5, zoom: 1 };
+  renderCoverPreview();
+  generateSnippet();
+  showToast("Cover set");
+}
+
+document.getElementById("coverUploadBtn").addEventListener("click", () => coverFileInput.click());
+document.getElementById("coverFromFirstBtn").addEventListener("click", () => {
+  if (!rows.length) return;
+  setCoverFromItem(rows[0][0]);
+});
+coverPreview.addEventListener("click", () => { if (!coverSource) coverFileInput.click(); });
+
+coverFileInput.addEventListener("change", e => {
+  const f = e.target.files[0];
+  coverFileInput.value = "";
+  if (!f) return;
+  loadItemFromFile(f).then(item => {
+    if (item) setCoverFromItem(item);
+  });
+});
+
+// Visible-window maths shared by preview / modal / export.
+// Returns the source-pixel rect visible in a frame of frameW×frameH.
+function cropWindow(frameW, frameH) {
+  const s = coverSource;
+  const srcAR = s.naturalWidth / s.naturalHeight;
+  const baseScale = srcAR > FRAME_AR
+    ? frameH / s.naturalHeight
+    : frameW / s.naturalWidth;
+  const scale = baseScale * coverCropView.zoom;
+  const visW = frameW / scale;
+  const visH = frameH / scale;
+
+  // Clamp centre so the window stays inside the source
+  const minCx = (visW / 2) / s.naturalWidth;
+  const maxCx = 1 - minCx;
+  const minCy = (visH / 2) / s.naturalHeight;
+  const maxCy = 1 - minCy;
+  coverCropView.cx = Math.min(Math.max(coverCropView.cx, minCx), Math.max(minCx, maxCx));
+  coverCropView.cy = Math.min(Math.max(coverCropView.cy, minCy), Math.max(minCy, maxCy));
+
+  return {
+    sx: coverCropView.cx * s.naturalWidth - visW / 2,
+    sy: coverCropView.cy * s.naturalHeight - visH / 2,
+    sw: visW,
+    sh: visH,
+    scale
+  };
+}
+
+// coverCropView points at either the committed crop or the modal's temp
+let coverCropView = coverCrop;
+
+function renderCoverPreview() {
+  const editBtn = document.getElementById("coverEditBtn");
+
+  if (!coverSource) {
+    coverPreview.className = "cover-preview-wrap empty";
+    coverPreview.innerHTML = "Click to choose a cover source";
+    editBtn.style.display = "";
+    return;
+  }
+
+  coverPreview.className = "cover-preview-wrap";
+  coverPreview.innerHTML = "";
+
+  if (coverSource.type === "video") {
+    // Videos export untouched — no crop
+    editBtn.style.display = "none";
+    const vid = document.createElement("video");
+    vid.src = coverSource.url;
+    vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true;
+    coverPreview.appendChild(vid);
+    return;
+  }
+
+  editBtn.style.display = "";
+  coverCropView = coverCrop;
+
+  const wrapW = coverPreview.clientWidth || 396;
+  const wrapH = wrapW / FRAME_AR;
+  const win = cropWindow(wrapW, wrapH);
+
+  const img = document.createElement("img");
+  img.src = coverSource.url;
+  img.style.width = (coverSource.naturalWidth * win.scale) + "px";
+  img.style.height = (coverSource.naturalHeight * win.scale) + "px";
+  img.style.left = (-win.sx * win.scale) + "px";
+  img.style.top = (-win.sy * win.scale) + "px";
+  img.draggable = false;
+  coverPreview.appendChild(img);
+}
+
+document.getElementById("coverEditBtn").addEventListener("click", () => {
+  if (!coverSource) { coverFileInput.click(); return; }
+  if (coverSource.type === "video") return;
+  openCropModal();
+});
+
+/* ================================================================
+ * CROP MODAL
+ * ================================================================ */
+const cropOverlay = document.getElementById("cropOverlay");
+const cropCanvas = document.getElementById("cropCanvas");
+const cropFrame = document.getElementById("cropFrame");
+const cropZoomSlider = document.getElementById("cropZoomSlider");
+const cropZoomLabel = document.getElementById("cropZoomLabel");
+const cropCanvasWrap = document.getElementById("cropCanvasWrap");
+
+let cropTemp = { cx: 0.5, cy: 0.5, zoom: 1 };
+let cropDragging = false;
+let cropStartX = 0, cropStartY = 0, cropStartCx = 0.5, cropStartCy = 0.5;
+let cropImgEl = null;
+
+function openCropModal() {
+  cropTemp = { ...coverCrop };
+  cropZoomSlider.value = cropTemp.zoom * 100;
+  cropZoomLabel.textContent = Math.round(cropTemp.zoom * 100) + "%";
+  cropOverlay.classList.add("open");
+
+  cropImgEl = new Image();
+  cropImgEl.onload = () => renderCropModal();
+  cropImgEl.src = coverSource.url;
+}
+
+function closeCropModal() { cropOverlay.classList.remove("open"); }
+
+document.getElementById("cropCancelBtn").addEventListener("click", closeCropModal);
+document.getElementById("cropApplyBtn").addEventListener("click", () => {
+  coverCrop = { ...cropTemp };
+  closeCropModal();
+  renderCoverPreview();
+});
+
+cropZoomSlider.addEventListener("input", () => {
+  cropTemp.zoom = parseInt(cropZoomSlider.value) / 100;
+  cropZoomLabel.textContent = Math.round(cropTemp.zoom * 100) + "%";
+  renderCropModal();
+});
+
+function renderCropModal() {
+  if (!coverSource || !cropImgEl || !cropImgEl.complete) return;
+
+  const wrapRect = cropCanvasWrap.getBoundingClientRect();
+  const modalW = wrapRect.width || 660;
+  const modalH = modalW * 0.6;
+  cropCanvasWrap.style.height = modalH + "px";
+
+  const frameW = modalW * 0.7;
+  const frameH = frameW / FRAME_AR;
+  const frameLeft = (modalW - frameW) / 2;
+  const frameTop = (modalH - frameH) / 2;
+
+  cropFrame.style.width = frameW + "px";
+  cropFrame.style.height = frameH + "px";
+  cropFrame.style.left = frameLeft + "px";
+  cropFrame.style.top = frameTop + "px";
+
+  coverCropView = cropTemp;
+  const win = cropWindow(frameW, frameH);
+
+  cropCanvas.width = modalW;
+  cropCanvas.height = modalH;
+  const ctx = cropCanvas.getContext("2d");
+  ctx.clearRect(0, 0, modalW, modalH);
+
+  const dispW = coverSource.naturalWidth * win.scale;
+  const dispH = coverSource.naturalHeight * win.scale;
+  const imgX = frameLeft - win.sx * win.scale;
+  const imgY = frameTop - win.sy * win.scale;
+
+  ctx.drawImage(cropImgEl, imgX, imgY, dispW, dispH);
+
+  // Dim everything outside the crop frame
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.fillRect(0, 0, modalW, frameTop);
+  ctx.fillRect(0, frameTop + frameH, modalW, modalH - frameTop - frameH);
+  ctx.fillRect(0, frameTop, frameLeft, frameH);
+  ctx.fillRect(frameLeft + frameW, frameTop, modalW - frameLeft - frameW, frameH);
+}
+
+cropCanvasWrap.addEventListener("mousedown", e => {
+  cropDragging = true;
+  cropStartX = e.clientX;
+  cropStartY = e.clientY;
+  cropStartCx = cropTemp.cx;
+  cropStartCy = cropTemp.cy;
+});
+
+window.addEventListener("mousemove", e => {
+  if (!cropDragging || !coverSource) return;
+  const wrapRect = cropCanvasWrap.getBoundingClientRect();
+  const modalW = wrapRect.width || 660;
+  const frameW = modalW * 0.7;
+  const frameH = frameW / FRAME_AR;
+  coverCropView = cropTemp;
+  const win = cropWindow(frameW, frameH);
+  cropTemp.cx = cropStartCx - (e.clientX - cropStartX) / (win.scale * coverSource.naturalWidth);
+  cropTemp.cy = cropStartCy - (e.clientY - cropStartY) / (win.scale * coverSource.naturalHeight);
+  renderCropModal();
+});
+
+window.addEventListener("mouseup", () => { cropDragging = false; });
+
+/* ================================================================
+ * EXPORT
+ * ================================================================ */
+exportBtn.addEventListener("click", openExport);
+document.getElementById("closeExport").addEventListener("click", closeExport);
+overlay.addEventListener("click", closeExport);
+
+function openExport() {
+  generateSnippet();
+  renderCoverPreview();
+  exportPanel.classList.add("open");
+  overlay.classList.add("open");
+}
+
+function closeExport() {
+  exportPanel.classList.remove("open");
+  overlay.classList.remove("open");
+}
+
+["exportTitle", "exportFolder", "exportColor", "exportYear", "exportDesc"].forEach(id => {
+  document.getElementById(id).addEventListener("input", generateSnippet);
+});
+document.getElementById("exportWip").addEventListener("change", generateSnippet);
+
+function generateSnippet() {
+  const title = document.getElementById("exportTitle").value || "Project Title";
+  const folder = document.getElementById("exportFolder").value || "XX";
+  const color = document.getElementById("exportColor").value || "#E8E0D5";
+  const year = document.getElementById("exportYear").value;
+  const wip = document.getElementById("exportWip").checked;
+  const descRaw = document.getElementById("exportDesc").value.trim() || "Project description.";
+
+  // Paragraphs (blank-line separated) → \n\n escapes like content.js uses
+  const desc = descRaw
+    .replace(/"/g, '\\"')
+    .split(/\n\s*\n/)
+    .map(p => p.replace(/\n/g, " ").trim())
+    .filter(Boolean)
+    .join("\\n\\n");
+
+  const coverIsVideo = coverSource && coverSource.type === "video";
+  const coverExt = coverIsVideo ? "mp4" : "webp";
+
+  let snippet = `    {\n`;
+  snippet += `      title: "${title}",\n`;
+  snippet += `      folder: "${folder}",\n`;
+  snippet += `      cover: "images/projects/${folder}/cover.${coverExt}",\n`;
+  snippet += `      color: "${color}",\n`;
+  snippet += `      wip: ${wip},\n`;
+  if (layoutMode === "grid") snippet += `      layout: "grid",\n`;
+  if (year) snippet += `      year: "${year}",\n`;
+  snippet += `      description:\n`;
+  snippet += `        "${desc}",\n`;
+  snippet += `    },`;
+
+  snippet += `\n\n/* ── File structure ──────────────────────\n`;
+  snippet += `   images/projects/${folder}/\n`;
+  snippet += `     cover.${coverExt}\n`;
+
+  let globalIdx = 1;
+  rows.forEach(row => {
+    const num = String(globalIdx).padStart(2, "0");
+    if (row.length === 1) {
+      snippet += `     ${num}.${getFileExt(row[0].file)}\n`;
+    } else {
+      snippet += `     ${num}/\n`;
+      row.forEach((item, i) => {
+        snippet += `       ${String(i + 1).padStart(2, "0")}.${getFileExt(item.file)}\n`;
+      });
+    }
+    globalIdx++;
+  });
+  snippet += `*/`;
+
+  document.getElementById("snippetOutput").value = snippet;
+}
+
+document.getElementById("copySnippetBtn").addEventListener("click", () => {
+  navigator.clipboard.writeText(document.getElementById("snippetOutput").value)
+    .then(() => showToast("Copied to clipboard"));
+});
+
+// Build [path, blob] pairs for the export — shared by ZIP + folder save
+async function buildExportFiles() {
+  const out = [];
+
+  if (coverSource) {
+    if (coverSource.type === "video") {
+      const blob = await fetch(coverSource.url).then(r => r.blob());
+      out.push(["cover.mp4", blob]);
+    } else {
+      const blob = await generateCroppedCover();
+      if (blob) out.push(["cover.webp", blob]);
+    }
+  }
+
+  let globalIdx = 1;
+  for (const row of rows) {
+    const num = String(globalIdx).padStart(2, "0");
+    if (row.length === 1) {
+      const blob = await fetch(row[0].url).then(r => r.blob());
+      out.push([`${num}.${getFileExt(row[0].file)}`, blob]);
+    } else {
+      for (let i = 0; i < row.length; i++) {
+        const blob = await fetch(row[i].url).then(r => r.blob());
+        out.push([`${num}/${String(i + 1).padStart(2, "0")}.${getFileExt(row[i].file)}`, blob]);
+      }
+    }
+    globalIdx++;
+  }
+  return out;
+}
+
+// ZIP download
+document.getElementById("downloadBtn").addEventListener("click", async () => {
+  const folder = document.getElementById("exportFolder").value || "XX";
+
+  if (!window.JSZip) {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+    document.head.appendChild(script);
+    await new Promise(resolve => script.onload = resolve);
+  }
+
+  showToast("Building ZIP…");
+  const zip = new window.JSZip();
+  const projectFolder = zip.folder(folder);
+  const files = await buildExportFiles();
+  for (const [path, blob] of files) projectFolder.file(path, blob);
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `project-${folder}.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("ZIP downloaded");
+});
+
+// Direct folder save (Chrome / Edge — File System Access API)
+const saveFolderBtn = document.getElementById("saveFolderBtn");
+if ("showDirectoryPicker" in window) saveFolderBtn.style.display = "";
+
+saveFolderBtn.addEventListener("click", async () => {
+  try {
+    const dir = await window.showDirectoryPicker({ mode: "readwrite" });
+    showToast("Writing files…");
+    const files = await buildExportFiles();
+
+    for (const [path, blob] of files) {
+      const parts = path.split("/");
+      let target = dir;
+      for (let i = 0; i < parts.length - 1; i++) {
+        target = await target.getDirectoryHandle(parts[i], { create: true });
+      }
+      const fh = await target.getFileHandle(parts[parts.length - 1], { create: true });
+      const writable = await fh.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+    showToast(`Saved ${files.length} files to folder`);
+  } catch (err) {
+    if (err && err.name !== "AbortError") showToast("Save failed: " + err.message, 3500);
+  }
+});
+
+// Cropped cover → 1200×900 WebP
+function generateCroppedCover() {
+  return new Promise(resolve => {
+    if (!coverSource) { resolve(null); return; }
+
+    const outW = 1200, outH = 900;
+    const canvas = document.createElement("canvas");
+    canvas.width = outW;
+    canvas.height = outH;
+    const ctx = canvas.getContext("2d");
+
+    const img = new Image();
+    img.onload = () => {
+      coverCropView = coverCrop;
+      const win = cropWindow(outW, outH);
+      ctx.drawImage(img, win.sx, win.sy, win.sw, win.sh, 0, 0, outW, outH);
+      canvas.toBlob(blob => resolve(blob), "image/webp", 0.92);
+    };
+    img.onerror = () => resolve(null);
+    img.src = coverSource.url;
+  });
+}
+
+/* ================================================================
+ * ARRANGE PANEL
+ * ================================================================ */
+let arrangeDragItem = null;
+let arrangeDragSrcRow = null;
+let arrangeDragSrcIdx = null;
+
+arrangeBtn.addEventListener("click", () => {
+  arrangePanel.classList.add("open");
+  renderArrange();
+});
+
+document.getElementById("closeArrangeBtn").addEventListener("click", closeArrange);
+
+function closeArrange() {
+  arrangePanel.classList.remove("open");
+}
+
+function renderArrange() {
+  arrangeBody.classList.remove("dragging-active");
+  arrangeBody.innerHTML = "";
+  let globalIdx = 1;
+
+  rows.forEach((row, rowIndex) => {
+    const dropBetween = document.createElement("div");
+    dropBetween.className = "arrange-drop-between";
+    setupArrangeDropBetween(dropBetween, rowIndex);
+    arrangeBody.appendChild(dropBetween);
+
+    const rowEl = document.createElement("div");
+    rowEl.className = "arrange-row";
+
+    const numLabel = document.createElement("span");
+    numLabel.className = "arrange-row-num";
+    numLabel.textContent = String(globalIdx).padStart(2, "0");
+    rowEl.appendChild(numLabel);
+
+    const itemsWrap = document.createElement("div");
+    itemsWrap.className = "arrange-row-items";
+    setupArrangeRowDrop(itemsWrap, rowIndex);
+
+    row.forEach((item, cellIndex) => {
+      const thumb = document.createElement("div");
+      thumb.className = "arrange-thumb";
+      thumb.draggable = true;
+      thumb.dataset.rowIndex = rowIndex;
+      thumb.dataset.cellIndex = cellIndex;
+
+      if (item.type === "video") {
+        const vid = document.createElement("video");
+        vid.src = item.url;
+        vid.muted = true; vid.autoplay = true; vid.loop = true; vid.playsInline = true;
+        thumb.appendChild(vid);
+        const badge = document.createElement("span");
+        badge.className = "thumb-type";
+        badge.textContent = "MP4";
+        thumb.appendChild(badge);
+      } else {
+        const img = document.createElement("img");
+        img.src = item.url;
+        thumb.appendChild(img);
+        if (item.type === "gif") {
+          const badge = document.createElement("span");
+          badge.className = "thumb-type";
+          badge.textContent = "GIF";
+          thumb.appendChild(badge);
+        }
+      }
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "thumb-remove";
+      removeBtn.innerHTML = "&times;";
+      removeBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        removeImage(rowIndex, cellIndex);
+      });
+      thumb.appendChild(removeBtn);
+
+      setupArrangeThumbDrag(thumb, rowIndex, cellIndex);
+      itemsWrap.appendChild(thumb);
+    });
+
+    rowEl.appendChild(itemsWrap);
+
+    const actions = document.createElement("div");
+    actions.className = "arrange-row-actions";
+
+    const upBtn = document.createElement("button");
+    upBtn.className = "arrange-row-btn";
+    upBtn.title = "Move up";
+    upBtn.disabled = rowIndex === 0;
+    upBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>`;
+    upBtn.addEventListener("click", () => {
+      if (rowIndex === 0) return;
+      [rows[rowIndex - 1], rows[rowIndex]] = [rows[rowIndex], rows[rowIndex - 1]];
+      commit();
+    });
+    actions.appendChild(upBtn);
+
+    const downBtn = document.createElement("button");
+    downBtn.className = "arrange-row-btn";
+    downBtn.title = "Move down";
+    downBtn.disabled = rowIndex === rows.length - 1;
+    downBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`;
+    downBtn.addEventListener("click", () => {
+      if (rowIndex === rows.length - 1) return;
+      [rows[rowIndex], rows[rowIndex + 1]] = [rows[rowIndex + 1], rows[rowIndex]];
+      commit();
+    });
+    actions.appendChild(downBtn);
+
+    if (row.length > 1) {
+      const ungroupBtn = document.createElement("button");
+      ungroupBtn.className = "arrange-row-btn";
+      ungroupBtn.title = "Ungroup row";
+      ungroupBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>`;
+      ungroupBtn.addEventListener("click", () => ungroupRow(rowIndex));
+      actions.appendChild(ungroupBtn);
+    }
+
+    rowEl.appendChild(actions);
+
+    // Hover → highlight + scroll to the matching row in the mini-preview
+    rowEl.addEventListener("mouseenter", () => highlightPreviewRow(rowIndex, true));
+    rowEl.addEventListener("mouseleave", () => highlightPreviewRow(rowIndex, false));
+
+    arrangeBody.appendChild(rowEl);
+    globalIdx++;
+  });
+
+  const finalDrop = document.createElement("div");
+  finalDrop.className = "arrange-drop-between";
+  setupArrangeDropBetween(finalDrop, rows.length);
+  arrangeBody.appendChild(finalDrop);
+
+  renderArrangePreview();
+}
+
+/* Mini live preview of the whole project (right pane) — mirrors the
+   main render: stack rows, ratio group rows, 2-col chunks in grid mode */
+const arrangePreview = document.getElementById("arrangePreview");
+
+function renderArrangePreview() {
+  arrangePreview.innerHTML = "";
+
+  const label = document.createElement("div");
+  label.className = "arrange-preview-label";
+  label.textContent = "Live Preview";
+  arrangePreview.appendChild(label);
+
+  let globalIdx = 1;
+  let chunk = null;
+
+  rows.forEach((row, rowIndex) => {
+    const isGroup = row.length > 1;
+    const rowNum = String(globalIdx).padStart(2, "0");
+    const useChunk = layoutMode === "grid" && !isGroup;
+
+    const rowEl = document.createElement("div");
+    rowEl.className = "ap-row";
+    rowEl.dataset.rowIndex = rowIndex;
+
+    if (isGroup) {
+      const ratios = row.map(item => item.naturalWidth / item.naturalHeight);
+      rowEl.style.gridTemplateColumns = ratios.map(r => r + "fr").join(" ");
+    } else {
+      rowEl.style.gridTemplateColumns = "1fr";
+    }
+
+    row.forEach(item => {
+      if (item.type === "video") {
+        const vid = document.createElement("video");
+        vid.src = item.url;
+        vid.muted = true; vid.autoplay = true; vid.loop = true; vid.playsInline = true;
+        rowEl.appendChild(vid);
+      } else {
+        const img = document.createElement("img");
+        img.src = item.url;
+        rowEl.appendChild(img);
+      }
+    });
+
+    const num = document.createElement("span");
+    num.className = "ap-num";
+    num.textContent = rowNum;
+    rowEl.appendChild(num);
+
+    // Hover on preview row → highlight matching arrange row
+    rowEl.addEventListener("mouseenter", () => highlightArrangeRow(rowIndex, true));
+    rowEl.addEventListener("mouseleave", () => highlightArrangeRow(rowIndex, false));
+
+    if (useChunk) {
+      if (!chunk) {
+        chunk = document.createElement("div");
+        chunk.className = "ap-chunk";
+        arrangePreview.appendChild(chunk);
+      }
+      chunk.appendChild(rowEl);
+    } else {
+      chunk = null;
+      arrangePreview.appendChild(rowEl);
+    }
+
+    globalIdx++;
+  });
+}
+
+function highlightPreviewRow(rowIndex, on) {
+  const el = arrangePreview.querySelector(`.ap-row[data-row-index="${rowIndex}"]`);
+  if (!el) return;
+  el.classList.toggle("highlight", on);
+  if (on) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function highlightArrangeRow(rowIndex, on) {
+  const rowEls = arrangeBody.querySelectorAll(".arrange-row");
+  const el = rowEls[rowIndex];
+  if (!el) return;
+  const items = el.querySelector(".arrange-row-items");
+  if (items) items.classList.toggle("drag-over", on);
+  if (on) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+// Auto-scroll the list while dragging near its top/bottom edge
+arrangeBody.addEventListener("dragover", e => {
+  if (!arrangeDragItem) return;
+  const rect = arrangeBody.getBoundingClientRect();
+  const margin = 70;
+  if (e.clientY < rect.top + margin) arrangeBody.scrollTop -= 14;
+  else if (e.clientY > rect.bottom - margin) arrangeBody.scrollTop += 14;
+});
+
+function setupArrangeDropBetween(el, beforeRow) {
+  el.addEventListener("dragover", e => {
+    if (!arrangeDragItem) return;
+    e.preventDefault();
+    el.classList.add("active");
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("active"));
+  el.addEventListener("drop", e => {
+    e.preventDefault();
+    el.classList.remove("active");
+    if (!arrangeDragItem) return;
+
+    const srcRow = rows[arrangeDragSrcRow];
+    srcRow.splice(arrangeDragSrcIdx, 1);
+    if (srcRow.length === 0) rows.splice(arrangeDragSrcRow, 1);
+
+    let targetRow = beforeRow;
+    if (arrangeDragSrcRow < beforeRow && srcRow.length === 0) targetRow--;
+
+    rows.splice(targetRow, 0, [arrangeDragItem]);
+    arrangeDragItem = null;
+    commit();
+  });
+}
+
+function setupArrangeRowDrop(el, rowIndex) {
+  el.addEventListener("dragover", e => {
+    if (!arrangeDragItem) return;
+    e.preventDefault();
+    el.classList.add("drag-over");
+  });
+  el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
+  el.addEventListener("drop", e => {
+    e.preventDefault();
+    el.classList.remove("drag-over");
+    if (!arrangeDragItem) return;
+
+    const srcRow = rows[arrangeDragSrcRow];
+    srcRow.splice(arrangeDragSrcIdx, 1);
+    if (srcRow.length === 0) rows.splice(arrangeDragSrcRow, 1);
+
+    let adjRowIdx = rowIndex;
+    if (arrangeDragSrcRow < rowIndex && srcRow.length === 0) adjRowIdx--;
+
+    rows[adjRowIdx].push(arrangeDragItem);
+    arrangeDragItem = null;
+    commit();
+  });
+}
+
+function setupArrangeThumbDrag(thumb, rowIndex, cellIndex) {
+  thumb.addEventListener("dragstart", e => {
+    arrangeDragItem = rows[rowIndex][cellIndex];
+    arrangeDragSrcRow = rowIndex;
+    arrangeDragSrcIdx = cellIndex;
+    e.dataTransfer.effectAllowed = "move";
+    // Use the thumbnail itself as the drag ghost (snapshot before dimming)
+    e.dataTransfer.setDragImage(thumb, thumb.offsetWidth / 2, thumb.offsetHeight / 2);
+    // Defer state classes so the ghost snapshot isn't affected
+    requestAnimationFrame(() => {
+      thumb.classList.add("dragging");
+      arrangeBody.classList.add("dragging-active");
+    });
+  });
+
+  thumb.addEventListener("dragend", () => {
+    thumb.classList.remove("dragging");
+    arrangeBody.classList.remove("dragging-active");
+    arrangeDragItem = null;
+    arrangeBody.querySelectorAll(".drag-over, .active, .drag-left, .drag-right").forEach(el => {
+      el.classList.remove("drag-over", "active", "drag-left", "drag-right");
+    });
+  });
+
+  thumb.addEventListener("dragover", e => {
+    if (!arrangeDragItem) return;
+    e.preventDefault();
+    e.stopPropagation();
+    arrangeBody.querySelectorAll(".drag-left, .drag-right, .drag-over").forEach(el => {
+      el.classList.remove("drag-left", "drag-right", "drag-over");
+    });
+    const rect = thumb.getBoundingClientRect();
+    if (e.clientX - rect.left < rect.width / 2) thumb.classList.add("drag-left");
+    else thumb.classList.add("drag-right");
+  });
+
+  thumb.addEventListener("dragleave", () => {
+    thumb.classList.remove("drag-left", "drag-right");
+  });
+
+  thumb.addEventListener("drop", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    thumb.classList.remove("drag-left", "drag-right");
+    if (!arrangeDragItem) return;
+
+    const targetRowIdx = parseInt(thumb.dataset.rowIndex);
+    const targetCellIdx = parseInt(thumb.dataset.cellIndex);
+    if (targetRowIdx === arrangeDragSrcRow && targetCellIdx === arrangeDragSrcIdx) {
+      arrangeDragItem = null;
+      return;
+    }
+
+    const rect = thumb.getBoundingClientRect();
+    const insertBefore = (e.clientX - rect.left) < rect.width / 2;
+
+    const srcRow = rows[arrangeDragSrcRow];
+    const item = srcRow.splice(arrangeDragSrcIdx, 1)[0];
+    if (srcRow.length === 0) rows.splice(arrangeDragSrcRow, 1);
+
+    let adjRowIdx = targetRowIdx;
+    if (arrangeDragSrcRow < targetRowIdx && srcRow.length === 0) adjRowIdx--;
+    let adjCellIdx = targetCellIdx;
+    if (arrangeDragSrcRow === targetRowIdx && arrangeDragSrcIdx < targetCellIdx) adjCellIdx--;
+
+    const targetRow = rows[adjRowIdx];
+    targetRow.splice(insertBefore ? adjCellIdx : adjCellIdx + 1, 0, item);
+
+    arrangeDragItem = null;
+    commit();
+  });
+}
+
+/* ================================================================
+ * KEYBOARD + SAFETY
+ * ================================================================ */
+document.addEventListener("keydown", e => {
+  const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+
+  if (e.key === "Escape") {
+    if (lightbox.classList.contains("open")) lightbox.classList.remove("open");
+    else if (cropOverlay.classList.contains("open")) closeCropModal();
+    else if (exportPanel.classList.contains("open")) closeExport();
+    else if (arrangePanel.classList.contains("open")) closeArrange();
+    return;
+  }
+
+  if (inField) return;
+
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    if (e.shiftKey) redo();
+    else undo();
+  }
+});
+
+window.addEventListener("beforeunload", e => {
+  if (rows.length) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+
+// Initial state
+updateUI();
+</script>
+</body>
+</html>
