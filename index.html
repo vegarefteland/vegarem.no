@@ -138,6 +138,7 @@
       --placeholder:#d4d4d4;
       --hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
       --gap:        6px;
+      --proj-radius: 10px;  /* outer corner rounding of the whole project block */
       --font:       'Arimo', system-ui, sans-serif;
       --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
       --theme-transition: 350ms ease;
@@ -411,7 +412,7 @@
 
     .project-card {
       position: relative;
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 3 / 2;
       overflow: hidden;
       cursor: pointer;
       background: var(--placeholder);
@@ -1041,7 +1042,7 @@
     /* Per-image reveal — each cell slides up + fades in the moment its image
        finishes loading. After the last one settles, masonry positions shuffle. */
     .archive-img.cascade-in {
-      animation: cascadeIn 540ms var(--ease-out) both;
+      animation: cascadeIn 340ms var(--ease-out) both;
     }
     @keyframes cascadeIn {
       from { opacity: 0; transform: translateY(28px); filter: blur(2px); }
@@ -1342,9 +1343,42 @@
       will-change: opacity, transform;
     }
 
+    /* Flush group — opt in by placing content in a lettered subfolder
+       (e.g. images/projects/02/01A/01.webp, 01A/02.webp …). Items sit
+       together with no gaps; only the group's outer top & bottom corners
+       are rounded. Use 01A, 01B, 01C … for multiple groups in one project. */
+    .project-flush-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    /* Everything inside a group is flush: no interior gaps or rounding.
+       A group can hold single items and inline subfolder rows. */
+    .project-flush-group .project-img-item { border-radius: 0; }
+    .project-flush-group .project-row-grid { gap: 0; }
+
+    /* Round only the group's outer corners, whether the first/last child
+       is a single item or a subfolder row. */
+    .project-flush-group > .project-img-item:first-child,
+    .project-flush-group > .project-row-grid:first-child > .project-img-item:first-child {
+      border-top-left-radius: var(--proj-radius);
+    }
+    .project-flush-group > .project-img-item:first-child,
+    .project-flush-group > .project-row-grid:first-child > .project-img-item:last-child {
+      border-top-right-radius: var(--proj-radius);
+    }
+    .project-flush-group > .project-img-item:last-child,
+    .project-flush-group > .project-row-grid:last-child > .project-img-item:first-child {
+      border-bottom-left-radius: var(--proj-radius);
+    }
+    .project-flush-group > .project-img-item:last-child,
+    .project-flush-group > .project-row-grid:last-child > .project-img-item:last-child {
+      border-bottom-right-radius: var(--proj-radius);
+    }
+
     .project-hero.revealed,
     .project-img-item.revealed {
-      animation: projectReveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+      animation: projectReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     @keyframes projectReveal {
@@ -1555,13 +1589,14 @@
       flex-direction: column;
       align-items: center;
       gap: var(--gap);
-      padding: 72px 40px 60px;
+      padding: 40px 0 60px;
       box-sizing: border-box;
     }
     .focus-scroll::-webkit-scrollbar { display: none; }
 
+    /* Near full-width so every detail is visible; capped for ultra-wide screens */
     .focus-item {
-      width: min(900px, 100%);
+      width: min(2200px, 95vw);
       position: relative;
     }
 
@@ -1593,6 +1628,38 @@
       user-select: none;
     }
 
+    /* Flush group in focus mode — mirrors .project-flush-group: items sit
+       together with no gaps, only the group's outer corners rounded. */
+    .focus-flush-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .focus-flush-group .focus-grid-row { gap: 0; }
+    .focus-flush-group img,
+    .focus-flush-group video { border-radius: 0; }
+
+    .focus-flush-group > img:first-child,
+    .focus-flush-group > video:first-child,
+    .focus-flush-group > .focus-grid-row:first-child > :first-child {
+      border-top-left-radius: var(--proj-radius);
+    }
+    .focus-flush-group > img:first-child,
+    .focus-flush-group > video:first-child,
+    .focus-flush-group > .focus-grid-row:first-child > :last-child {
+      border-top-right-radius: var(--proj-radius);
+    }
+    .focus-flush-group > img:last-child,
+    .focus-flush-group > video:last-child,
+    .focus-flush-group > .focus-grid-row:last-child > :first-child {
+      border-bottom-left-radius: var(--proj-radius);
+    }
+    .focus-flush-group > img:last-child,
+    .focus-flush-group > video:last-child,
+    .focus-flush-group > .focus-grid-row:last-child > :last-child {
+      border-bottom-right-radius: var(--proj-radius);
+    }
+
     @media (max-width: 860px) {
       .project-layout {
         grid-template-columns: 1fr;
@@ -1603,16 +1670,16 @@
     }
 
     /* ─── Stagger for project grid ───────────────────────────── */
-    .project-card { animation: cardIn 480ms var(--ease-out) both; }
+    .project-card { animation: cardIn 300ms var(--ease-out) both; }
     .project-card:nth-child(1)  { animation-delay: 0ms; }
-    .project-card:nth-child(2)  { animation-delay: 65ms; }
-    .project-card:nth-child(3)  { animation-delay: 130ms; }
-    .project-card:nth-child(4)  { animation-delay: 195ms; }
-    .project-card:nth-child(5)  { animation-delay: 260ms; }
-    .project-card:nth-child(6)  { animation-delay: 325ms; }
-    .project-card:nth-child(7)  { animation-delay: 375ms; }
-    .project-card:nth-child(8)  { animation-delay: 415ms; }
-    .project-card:nth-child(9)  { animation-delay: 445ms; }
+    .project-card:nth-child(2)  { animation-delay: 35ms; }
+    .project-card:nth-child(3)  { animation-delay: 70ms; }
+    .project-card:nth-child(4)  { animation-delay: 105ms; }
+    .project-card:nth-child(5)  { animation-delay: 140ms; }
+    .project-card:nth-child(6)  { animation-delay: 175ms; }
+    .project-card:nth-child(7)  { animation-delay: 205ms; }
+    .project-card:nth-child(8)  { animation-delay: 225ms; }
+    .project-card:nth-child(9)  { animation-delay: 240ms; }
     .project-card:nth-child(n+10) { animation-delay: 465ms; }
 
     @keyframes cardIn {
@@ -1833,7 +1900,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jun 13. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jul 4. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.1</p>
           </div>
@@ -2161,7 +2228,7 @@
           if (!entry.isIntersecting) return;
           const el = entry.target;
           projRevealObs.unobserve(el);
-          const delay = revealBatch * 150;          // 150ms stagger per image
+          const delay = revealBatch * 70;           // 70ms stagger per image
           if (delay) el.style.animationDelay = delay + "ms";
           // Force a layout read before adding the class so the browser
           // registers the starting state and actually transitions.
@@ -2253,18 +2320,25 @@
         const png  = `${base}.png`;
         const gif  = `${base}.gif`;
 
-        // Probe for a subfolder grid row (e.g. images/projects/01/02/01.webp).
-        // If found → loadSubfolderRow handles it; otherwise → loadNormalItem.
         const subFormats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
-        let subFmt = 0;
-        const probe = new Image();
-        probe.onload = () => { projMisses = 0; loadSubfolderRow(base, probe); };
-        probe.onerror = () => {
-          subFmt++;
-          if (subFmt < subFormats.length) probe.src = `${base}/01${subFormats[subFmt]}`;
-          else loadNormalItem();
-        };
-        probe.src = `${base}/01${subFormats[0]}`;
+
+        // Stage 1: lettered flush-group folders (e.g. 01A/, 01B/ …).
+        // If present → loadFlushGroups; otherwise fall through to the row probe.
+        tryFlushGroups(num, probeSubfolderRow);
+
+        // Stage 2: subfolder grid row (e.g. images/projects/01/02/01.webp).
+        // If found → loadSubfolderRow handles it; otherwise → loadNormalItem.
+        function probeSubfolderRow() {
+          let subFmt = 0;
+          const probe = new Image();
+          probe.onload = () => { projMisses = 0; loadSubfolderRow(base, probe); };
+          probe.onerror = () => {
+            subFmt++;
+            if (subFmt < subFormats.length) probe.src = `${base}/01${subFormats[subFmt]}`;
+            else loadNormalItem();
+          };
+          probe.src = `${base}/01${subFormats[0]}`;
+        }
 
         function loadNormalItem() {
         const target = project.layout === "grid" ? container : right;
@@ -2482,6 +2556,171 @@
 
         addSubItem(firstImg); // add the probe image (already loaded)
         loadNextSubItem();    // probe for the next sub-image
+      }
+
+      // Loads lettered flush-group folders at slot `num` (e.g. 01A/, 01B/, 01C/…).
+      // Each group renders as a full-width stack with no gaps and only the group's
+      // outer top/bottom corners rounded. If slot `num` has no group A, calls
+      // onNoGroup() so the caller can fall through to the row / single probes.
+      function tryFlushGroups(num, onNoGroup) {
+        const gBase = `images/projects/${project.folder}/${num}`;
+        const gFormats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        let li = 0;
+        let anyGroup = false;
+
+        function loadLetter() {
+          if (li >= letters.length) { finishGroups(); return; }
+          const groupBase = `${gBase}${letters[li]}`;
+          const container = document.createElement("div");
+          container.className = "project-flush-group";
+          right.appendChild(container);
+          loadGroupItems(container, groupBase, gFormats, hadItems => {
+            if (!hadItems) { container.remove(); finishGroups(); return; }
+            anyGroup = true;
+            projMisses = 0;
+            li++;
+            loadLetter();
+          });
+        }
+
+        function finishGroups() {
+          // Groups consumed this slot → advance to the next slot. Otherwise let
+          // the caller try the row / single item probes at this same slot.
+          if (anyGroup) loadNextProjectItem();
+          else onNoGroup();
+        }
+
+        loadLetter();
+      }
+
+      // Fills a flush-group container with its numbered items (01, 02 …).
+      // Each item probes .mp4 first (silent looping video) then image formats,
+      // mirroring the top-level loader. done(hadItems) fires when the group ends.
+      // The first item is detected via .mp4 or .webp only (fast slot detection).
+      function loadGroupItems(container, groupBase, gFormats, done) {
+        let k = 0;
+        let count = 0;
+
+        function makeGroupVideo(video) {
+          const item = document.createElement("div");
+          item.className = "project-img-item";
+          const wrap = document.createElement("div");
+          wrap.className = "video-wrap";
+          wrap.appendChild(video);
+          item.appendChild(wrap);
+          return item;
+        }
+
+        function makeGroupImage(img) {
+          const item = document.createElement("div");
+          item.className = "project-img-item";
+          img.alt = "";
+          img.loading = "eager";
+          img.decoding = "async";
+          item.appendChild(img);
+          item.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
+          return item;
+        }
+
+        function addItem(item) {
+          item.classList.add("loaded");
+          item.dataset.revealIdx = revealIndex++;
+          container.appendChild(item);
+          if (projRevealObs) projRevealObs.observe(item);
+          count++;
+          nextItem();
+        }
+
+        // Nested subfolder row inside a flush group (e.g. 01A/06/01.webp,
+        // 01A/06/02.webp) — rendered as an inline ratio-sized grid row, flush
+        // with the rest of the stack.
+        function loadGroupRow(rowBase, firstImg) {
+          const rowGrid = document.createElement("div");
+          rowGrid.className = "project-row-grid";
+          container.appendChild(rowGrid);
+          count++;
+          const ratios = [];
+          let subIdx = 1; // firstImg is already 01; start probing from 02
+
+          function addSub(img) {
+            const item = document.createElement("div");
+            item.className = "project-img-item";
+            img.alt = ""; img.loading = "eager"; img.decoding = "async";
+            item.appendChild(img);
+            item.classList.add("loaded");
+            item.dataset.revealIdx = revealIndex++;
+            item.addEventListener("click", () => openLightbox(img.src, "#d4d4d4"));
+            rowGrid.appendChild(item);
+            if (projRevealObs) projRevealObs.observe(item);
+            ratios.push(img.naturalWidth / img.naturalHeight);
+            rowGrid.style.gridTemplateColumns = ratios.map(r => r + "fr").join(" ");
+          }
+
+          function nextSub() {
+            subIdx++;
+            const sub = String(subIdx).padStart(2, "0");
+            const sBase = `${rowBase}/${sub}`;
+            let f = 0;
+            const img = new Image();
+            img.onload = () => { addSub(img); nextSub(); };
+            img.onerror = () => {
+              f++;
+              if (f < gFormats.length) img.src = `${sBase}${gFormats[f]}`;
+              else { if (rowGrid.children.length === 0) rowGrid.remove(); nextItem(); }
+            };
+            img.src = `${sBase}${gFormats[0]}`;
+          }
+
+          addSub(firstImg);
+          nextSub();
+        }
+
+        function nextItem() {
+          k++;
+          const kn = String(k).padStart(2, "0");
+          const itemBase = `${groupBase}/${kn}`;
+          // First item probes only .webp for subfolder/image detection so a
+          // non-group slot bails quickly; later items try every format.
+          const formats = k === 1 ? [".webp"] : gFormats;
+
+          // 1) Nested subfolder row?  (kk/01.*)
+          let subFmt = 0;
+          const rowProbe = new Image();
+          rowProbe.onload = () => loadGroupRow(itemBase, rowProbe);
+          rowProbe.onerror = () => {
+            subFmt++;
+            if (subFmt < formats.length) rowProbe.src = `${itemBase}/01${formats[subFmt]}`;
+            else tryVideo();
+          };
+          rowProbe.src = `${itemBase}/01${formats[0]}`;
+
+          // 2) Single video (kk.mp4)
+          function tryVideo() {
+            const video = document.createElement("video");
+            video.autoplay = true;
+            video.muted = true;
+            video.loop = true;
+            video.setAttribute("playsinline", "");
+            video.setAttribute("preload", "metadata");
+            video.addEventListener("canplay", () => addItem(makeGroupVideo(video)), { once: true });
+            video.addEventListener("error", () => tryImage(0), { once: true });
+            video.src = `${itemBase}.mp4`;
+          }
+
+          // 3) Single image (kk.ext) — else the group ends
+          function tryImage(fmt) {
+            const img = new Image();
+            img.onload = () => addItem(makeGroupImage(img));
+            img.onerror = () => {
+              if (fmt + 1 < formats.length) tryImage(fmt + 1);
+              else done(count > 0);
+            };
+            img.src = `${itemBase}${formats[fmt]}`;
+          }
+        }
+
+        nextItem();
       }
 
       loadNextProjectItem();
@@ -3455,8 +3694,43 @@
         }
       }
 
-      // Walk direct children of project-right and reproduce their layout
-      Array.from(right.children).forEach(child => {
+      // Build a focus grid row from a source .project-row-grid / .project-img-grid
+      function buildFocusRow(src) {
+        const mediaEls = Array.from(src.querySelectorAll("img, video"));
+        if (!mediaEls.length) return null;
+        const grid = document.createElement("div");
+        grid.className = "focus-grid-row";
+        if (src.classList.contains("project-row-grid") && src.style.gridTemplateColumns) {
+          grid.style.gridTemplateColumns = src.style.gridTemplateColumns;
+        } else {
+          grid.style.setProperty("--fcols", src.classList.contains("project-row-grid") ? mediaEls.length : 2);
+        }
+        mediaEls.forEach(el => grid.appendChild(cloneMedia(el)));
+        return grid;
+      }
+
+      // Reproduce a single project-right child as a focus item, mirroring the
+      // project's grouping — flush groups stay flush with only outer corners
+      // rounded, everything else keeps the normal gapped/rounded look.
+      function appendFocusChild(child) {
+        // Flush group → one flush container holding its items & rows flush
+        if (child.classList.contains("project-flush-group")) {
+          const groupItem = document.createElement("div");
+          groupItem.className = "focus-item focus-flush-group";
+          Array.from(child.children).forEach(gc => {
+            if (gc.classList.contains("project-row-grid") ||
+                gc.classList.contains("project-img-grid")) {
+              const row = buildFocusRow(gc);
+              if (row) groupItem.appendChild(row);
+            } else {
+              const el = gc.querySelector("img, video");
+              if (el) groupItem.appendChild(cloneMedia(el));
+            }
+          });
+          if (groupItem.children.length) focusScroll.appendChild(groupItem);
+          return;
+        }
+
         const isGrid = child.classList.contains("project-img-grid") ||
                        child.classList.contains("project-row-grid");
 
@@ -3464,35 +3738,20 @@
         item.className = "focus-item";
 
         if (isGrid) {
-          // Reproduce the grid — 2 cols for project-img-grid, item-count cols for row-grids
-          const mediaEls = Array.from(child.querySelectorAll("img, video"));
-          if (!mediaEls.length) return;
-
-          const cols = child.classList.contains("project-row-grid")
-            ? mediaEls.length
-            : 2;
-
-          const grid = document.createElement("div");
-          grid.className = "focus-grid-row";
-          // Copy aspect-ratio columns from the source row grid if set
-          if (child.classList.contains("project-row-grid") && child.style.gridTemplateColumns) {
-            grid.style.gridTemplateColumns = child.style.gridTemplateColumns;
-          } else {
-            grid.style.setProperty("--fcols", cols);
-          }
-          mediaEls.forEach(el => grid.appendChild(cloneMedia(el)));
-          item.appendChild(grid);
-
+          const row = buildFocusRow(child);
+          if (!row) return;
+          item.appendChild(row);
         } else {
           // Single hero image or video
           const el = child.querySelector("img, video");
           if (!el) return;
-
           item.appendChild(cloneMedia(el));
         }
 
         focusScroll.appendChild(item);
-      });
+      }
+
+      Array.from(right.children).forEach(appendFocusChild);
 
       if (!focusScroll.children.length) return;
 
@@ -3605,7 +3864,7 @@
           card.style.animation = "none";
           void card.offsetWidth;
           card.style.animation = "";
-          card.style.animationDelay = (i * 65) + "ms";
+          card.style.animationDelay = (i * 35) + "ms";
         });
       }
 

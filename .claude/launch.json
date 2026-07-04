@@ -12,6 +12,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "3457", "."],
       "port": 3457
+    },
+    {
+      "name": "layout-tool",
+      "runtimeExecutable": "/opt/homebrew/bin/npx",
+      "runtimeArgs": ["serve", "-l", "3458", "/Users/vegarefteland/Desktop/project-layout-tool"],
+      "port": 3458
     }
   ]
 }

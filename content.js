@@ -1,4 +1,4 @@
-/* ================================================================
+ /* ================================================================
  * SITE CONTENT — edit this file to update your portfolio text.
  * No other files need to be touched for content changes.
  * ================================================================ */
@@ -53,7 +53,6 @@ const SITE = {
       cover: "images/projects/03/cover.webp",
       color: "#E8E0D5",
       wip: false,
-      layout: "grid",
       year: "2023–2026",
       description:
         "Selected poster design projects.\n\n" +
