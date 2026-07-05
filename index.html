@@ -461,6 +461,9 @@
       height: 100%;
       object-fit: cover;
       opacity: 0;
+      /* Slight base scale so the media bleeds past the rounded, clipped card
+         edge — kills the 1px dark seam that shows on the top edge on mobile. */
+      transform: scale(1.02);
       transition: transform 550ms var(--ease-out), opacity 380ms ease;
     }
     .project-card.loaded img,
@@ -468,7 +471,7 @@
 
     .project-card:hover img,
     .project-card:hover video {
-      transform: scale(1.04);
+      transform: scale(1.06);
     }
 
     /* Label – top left */
@@ -1496,6 +1499,24 @@
       cursor: pointer;
     }
 
+    /* ─── View next (bottom of project pages) ─────────────────── */
+    .view-next {
+      margin-top: 72px;
+      padding-top: 36px;
+      border-top: 1px solid var(--border);
+    }
+    .view-next:empty { display: none; }
+    .view-next-head { margin-bottom: 18px; }
+    .view-next-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 760px) {
+      .view-next-grid { grid-template-columns: 1fr; }
+      .view-next { margin-top: 48px; }
+    }
+
     /* ─── Focus mode ─────────────────────────────────────────── */
 
     /* Icon-only pill button — sits in the tags row alongside Description/Year */
@@ -2280,18 +2301,13 @@
           </div>
           <div class="project-right" id="project-right"></div>
         </div>
-        <div class="back-to-top" id="back-to-top">
-          <button class="back-to-top-btn" aria-label="Back to top">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="12" y1="19" x2="12" y2="5"/>
-              <polyline points="5 12 12 5 19 12"/>
-            </svg>
-            Back to top
-          </button>
-        </div>
+        <section class="view-next" id="view-next" aria-label="More projects"></section>
       `;
 
       const right = document.getElementById("project-right");
+
+      // Bottom-of-page "View next" section (independent of image loading)
+      renderViewNext(project);
 
       // Grid layout: all images in 2-col grid (set layout: "grid" in SITE.projects)
       // Default layout: all images stacked full-width
@@ -2794,83 +2810,111 @@
     /* ════════════════════════════════════════════════════════════════
      * RENDER PROJECT GRID
      * ════════════════════════════════════════════════════════════════ */
+    // Builds one project cover card (used by the home grid AND the
+    // "View next" section at the bottom of each project page).
+    function makeProjectCard(project) {
+      const card = document.createElement("div");
+      card.className = "project-card";
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("role", "article");
+      card.setAttribute("aria-label", project.title);
+
+      // LQIP-lite: use the project's dominant color as the placeholder
+      // so the card shows a tonally-matched block (not flat gray) while
+      // the real cover loads. Falls back to --placeholder if no color set.
+      if (project.color) card.style.background = project.color;
+
+      const label = document.createElement("span");
+      label.className = "project-label";
+      label.textContent = project.title;
+
+      const arrow = document.createElement("div");
+      arrow.className = "project-arrow";
+      arrow.setAttribute("aria-hidden", "true");
+      arrow.innerHTML = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+
+      const isVideo = /\.(mp4|webm|mov)$/i.test(project.cover);
+      let media;
+
+      if (isVideo) {
+        media = document.createElement("video");
+        media.autoplay = true;
+        media.muted = true;
+        media.defaultMuted = true;
+        media.loop = true;
+        media.playsInline = true;
+        media.setAttribute("playsinline", "");
+        media.setAttribute("preload", "auto");
+        media.addEventListener("loadeddata", () => {
+          card.classList.add("loaded");
+          media.play().catch(() => {});
+        }, { once: true });
+        media.onerror = function () {
+          this.style.display = "none";
+          card.classList.add("loaded");
+        };
+        media.src = project.cover;
+        media.load();
+      } else {
+        media = document.createElement("img");
+        media.src = project.cover;
+        media.alt = project.title;
+        media.loading = "lazy";
+        media.decoding = "async";
+        media.width = 800;
+        media.height = 600;
+        media.onload = () => card.classList.add("loaded");
+        media.onerror = function () {
+          this.style.display = "none";
+          card.classList.add("loaded");
+        };
+        if (media.complete && media.naturalWidth > 0) card.classList.add("loaded");
+      }
+
+      card.appendChild(media);
+      card.appendChild(label);
+      card.appendChild(arrow);
+
+      card.addEventListener("click", () => openProject(project));
+      card.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openProject(project);
+        }
+      });
+
+      return card;
+    }
+
     function renderProjects() {
       const grid = document.getElementById("project-grid");
-      SITE.projects.forEach(project => {
-        const card = document.createElement("div");
-        card.className = "project-card";
-        card.setAttribute("tabindex", "0");
-        card.setAttribute("role", "article");
-        card.setAttribute("aria-label", project.title);
+      SITE.projects.forEach(project => grid.appendChild(makeProjectCard(project)));
+    }
 
-        // LQIP-lite: use the project's dominant color as the placeholder
-        // so the card shows a tonally-matched block (not flat gray) while
-        // the real cover loads. Falls back to --placeholder if no color set.
-        if (project.color) card.style.background = project.color;
+    // "View next" — the 3 projects after the current one in content.js order,
+    // wrapping around, excluding the current project and any WIP ones.
+    function renderViewNext(current) {
+      const host = document.getElementById("view-next");
+      if (!host) return;
 
-        const label = document.createElement("span");
-        label.className = "project-label";
-        label.textContent = project.title;
+      const list = SITE.projects;
+      const start = list.indexOf(current);
+      const picks = [];
+      for (let step = 1; step < list.length && picks.length < 3; step++) {
+        const p = list[(start + step) % list.length];
+        if (p === current) continue;
+        if (p.wip || /^WIP_/i.test(p.folder)) continue;
+        picks.push(p);
+      }
+      if (!picks.length) { host.innerHTML = ""; return; }
 
-        const arrow = document.createElement("div");
-        arrow.className = "project-arrow";
-        arrow.setAttribute("aria-hidden", "true");
-        arrow.innerHTML = `<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
-
-        const isVideo = /\.(mp4|webm|mov)$/i.test(project.cover);
-        let media;
-
-        if (isVideo) {
-          media = document.createElement("video");
-          media.autoplay = true;
-          media.muted = true;
-          media.defaultMuted = true;
-          media.loop = true;
-          media.playsInline = true;
-          media.setAttribute("playsinline", "");
-          media.setAttribute("preload", "auto");
-          media.addEventListener("loadeddata", () => {
-            card.classList.add("loaded");
-            media.play().catch(() => {});
-          }, { once: true });
-          media.onerror = function () {
-            this.style.display = "none";
-            card.classList.add("loaded");
-          };
-          media.src = project.cover;
-          media.load();
-        } else {
-          media = document.createElement("img");
-          media.src = project.cover;
-          media.alt = project.title;
-          media.loading = "lazy";
-          media.decoding = "async";
-          media.width = 800;
-          media.height = 600;
-          media.onload = () => card.classList.add("loaded");
-          media.onerror = function () {
-            this.style.display = "none";
-            card.classList.add("loaded");
-          };
-          if (media.complete && media.naturalWidth > 0) card.classList.add("loaded");
-        }
-
-        card.appendChild(media);
-        card.appendChild(label);
-        card.appendChild(arrow);
-
-        card.addEventListener("click", () => openProject(project));
-        card.addEventListener("keydown", e => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            openProject(project);
-          }
-        });
-
-        grid.appendChild(card);
-      });
+      host.innerHTML = `
+        <div class="view-next-head"><span class="section-tag">View next</span></div>
+        <div class="view-next-grid"></div>`;
+      const grid = host.querySelector(".view-next-grid");
+      picks.forEach(p => grid.appendChild(makeProjectCard(p)));
     }
 
     /* ════════════════════════════════════════════════════════════════
