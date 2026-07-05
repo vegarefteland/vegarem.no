@@ -1504,7 +1504,11 @@
       margin-top: 72px;
       padding-top: 36px;
       border-top: 1px solid var(--border);
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
     }
+    .view-next.revealed { opacity: 1; transform: none; }
     .view-next:empty { display: none; }
     .view-next-head { margin-bottom: 18px; }
     .view-next-grid {
@@ -2306,9 +2310,6 @@
 
       const right = document.getElementById("project-right");
 
-      // Bottom-of-page "View next" section (independent of image loading)
-      renderViewNext(project);
-
       // Grid layout: all images in 2-col grid (set layout: "grid" in SITE.projects)
       // Default layout: all images stacked full-width
       let container;
@@ -2325,7 +2326,7 @@
       const MAX_MISSES = 1;
 
       function loadNextProjectItem() {
-        if (projMisses >= MAX_MISSES) { lbLoadingActive = false; initBackToTop(); return; }
+        if (projMisses >= MAX_MISSES) { lbLoadingActive = false; initBackToTop(); renderViewNext(project); return; }
         const i = projIndex++;
         const num  = String(i).padStart(2, "0");
         const base = `images/projects/${project.folder}/${num}`;
@@ -2915,6 +2916,15 @@
         <div class="view-next-grid"></div>`;
       const grid = host.querySelector(".view-next-grid");
       picks.forEach(p => grid.appendChild(makeProjectCard(p)));
+
+      // Fade in only when scrolled to (it sits at the very bottom of the page)
+      host.classList.remove("revealed");
+      const obs = new IntersectionObserver((entries, o) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) { host.classList.add("revealed"); o.disconnect(); }
+        });
+      }, { threshold: 0.12 });
+      obs.observe(host);
     }
 
     /* ════════════════════════════════════════════════════════════════
