@@ -6,3 +6,13 @@ Fonts/commit-mono-main/
 Thumbs.db
 _originals/
 *_original.*
+
+# macOS custom folder icons
+Icon?
+
+# Office lock/temp files
+~$*
+.~lock.*
+
+# GitHub Pages: skip Jekyll (served as static)
+# (.nojekyll is committed on purpose)
