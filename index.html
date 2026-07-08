@@ -525,6 +525,111 @@
       background: rgba(0, 0, 0, 0.04);
     }
 
+    /* ─── Divider between projects and the archive teaser ─── */
+    .home-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 46px 0 40px;
+    }
+
+    /* ─── Archive teaser (live scrolling wall, bottom of home) ─── */
+    .archive-teaser {
+      position: relative;
+      display: block;
+      height: clamp(200px, 26vw, 320px);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #ffffff;
+      cursor: pointer;
+      text-decoration: none;
+      transition: box-shadow 250ms ease;
+    }
+    .archive-teaser:hover { box-shadow: var(--hover-shadow); }
+    .archive-teaser:focus-visible { outline: 2px solid var(--nav-fg); outline-offset: 3px; }
+
+    /* Black in dark mode */
+    [data-theme="dark"] .archive-teaser { background: #000; }
+
+    /* Soft blur at the top & bottom edges, fading to sharp in the middle */
+    .archive-teaser::before,
+    .archive-teaser::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 90px;
+      z-index: 1;
+      pointer-events: none;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    .archive-teaser::before {
+      top: 0;
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+      mask-image: linear-gradient(to bottom, #000, transparent);
+    }
+    .archive-teaser::after {
+      bottom: 0;
+      -webkit-mask-image: linear-gradient(to top, #000, transparent);
+      mask-image: linear-gradient(to top, #000, transparent);
+    }
+
+    .archive-teaser-cols {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;   /* let columns be taller than the banner */
+      gap: 18px;
+      padding: 20px;
+      transition: transform 550ms var(--ease-out);
+    }
+    /* Zoom the whole wall on hover, matching the project cards */
+    .archive-teaser:hover .archive-teaser-cols { transform: scale(1.03); }
+    /* Same arrow flick as the project cards */
+    .archive-teaser:hover .project-arrow svg {
+      animation: ring 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      transform-origin: center;
+    }
+    .archive-teaser-col {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      height: max-content;
+      will-change: transform;
+    }
+    .archive-teaser-col.up   { animation: teaserUp   var(--dur, 26s) linear infinite; }
+    .archive-teaser-col.down { animation: teaserDown var(--dur, 26s) linear infinite; }
+
+    .archive-teaser-tile {
+      width: 100%;
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .archive-teaser-tile img,
+    .archive-teaser-tile video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 3px;
+    }
+
+    /* Content is duplicated 2×, so -50% loops seamlessly */
+    @keyframes teaserUp   { from { transform: translateY(0); }     to { transform: translateY(-50%); } }
+    @keyframes teaserDown { from { transform: translateY(-50%); }  to { transform: translateY(0); } }
+
+    /* Fewer, calmer columns on small screens */
+    @media (max-width: 640px) {
+      .archive-teaser { height: clamp(150px, 42vw, 220px); }
+      .archive-teaser-col:nth-child(n+4) { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .archive-teaser-col { animation: none !important; }
+    }
+
     /* ─── ── ABOUT PAGE ────────────────────────────────────────── */
     .about-wrap {
       max-width: 600px;
@@ -1827,6 +1932,20 @@
        ══════════════════════════════════════════════════════════════ -->
   <main id="page-home" class="page active" role="main">
     <div class="project-grid" id="project-grid"></div>
+
+    <div class="home-divider" aria-hidden="true"></div>
+
+    <!-- Live archive shortcut: scrolling wall of real archive files -->
+    <a class="archive-teaser" id="archive-teaser" href="/archive"
+       role="button" tabindex="0" aria-label="View archive">
+      <div class="archive-teaser-cols" id="archive-teaser-cols" aria-hidden="true"></div>
+      <span class="project-label">Archive</span>
+      <div class="project-arrow" aria-hidden="true">
+        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </a>
   </main>
 
   <!-- ══════════════════════════════════════════════════════════════
@@ -1925,7 +2044,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jul 5. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jul 8. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.2</p>
           </div>
@@ -2894,6 +3013,104 @@
       SITE.projects.forEach(project => grid.appendChild(makeProjectCard(project)));
     }
 
+    // Live archive shortcut at the bottom of home — a wall of columns that
+    // scroll in alternating directions, built from a random subset of the
+    // real archive files. Lazy-built when scrolled near; reshuffles each load.
+    function renderArchiveTeaser() {
+      const host = document.getElementById("archive-teaser");
+      const cols = document.getElementById("archive-teaser-cols");
+      if (!host || !cols) return;
+
+      host.addEventListener("click", e => { e.preventDefault(); navigate("archive"); });
+      host.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("archive"); }
+      });
+
+      if (host.dataset.built) return;
+      const io = new IntersectionObserver((entries, obs) => {
+        if (entries.some(e => e.isIntersecting)) { obs.disconnect(); build(); }
+      }, { rootMargin: "700px 0px" });
+      io.observe(host);
+
+      function build() {
+        if (host.dataset.built) return;
+        host.dataset.built = "1";
+
+        const NUM_COLS = 5;
+        const TARGET = 20;                 // random subset size (lazy-loaded)
+        const formats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
+
+        // Shuffle 1–50, probe in shuffled order, keep the first TARGET that exist
+        const order = [];
+        for (let i = 1; i <= 50; i++) order.push(i);
+        for (let i = order.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [order[i], order[j]] = [order[j], order[i]];
+        }
+
+        const items = [];
+        let idx = 0;
+
+        function probeNext() {
+          if (items.length >= TARGET || idx >= order.length) { done(); return; }
+          const num = String(order[idx++]).padStart(2, "0");
+          let fmt = 0;
+          const img = new Image();
+          img.decoding = "async";
+          img.onload = () => { items.push({ type: "img", src: img.src }); probeNext(); };
+          img.onerror = () => {
+            fmt++;
+            if (fmt < formats.length) { img.src = `images/archive/${num}${formats[fmt]}`; }
+            else {
+              const mp4 = `images/archive/${num}.mp4`;
+              fetch(mp4, { method: "HEAD" })
+                .then(r => { if (r.ok) items.push({ type: "video", src: mp4 }); probeNext(); })
+                .catch(() => probeNext());
+            }
+          };
+          img.src = `images/archive/${num}${formats[0]}`;
+        }
+
+        function makeTile(it) {
+          const tile = document.createElement("div");
+          tile.className = "archive-teaser-tile";
+          let el;
+          if (it.type === "video") {
+            el = document.createElement("video");
+            el.autoplay = true; el.muted = true; el.loop = true; el.playsInline = true;
+            el.setAttribute("playsinline", ""); el.setAttribute("preload", "metadata");
+            el.src = it.src;
+          } else {
+            el = document.createElement("img");
+            el.alt = ""; el.decoding = "async"; el.loading = "lazy";
+            el.src = it.src;
+          }
+          tile.appendChild(el);
+          return tile;
+        }
+
+        function done() {
+          if (!items.length) { host.style.display = "none"; return; }
+          const buckets = Array.from({ length: NUM_COLS }, () => []);
+          items.forEach((it, i) => buckets[i % NUM_COLS].push(it));
+
+          cols.innerHTML = "";
+          buckets.forEach((bucket, c) => {
+            if (!bucket.length) return;
+            const col = document.createElement("div");
+            col.className = "archive-teaser-col " + (c % 2 === 0 ? "up" : "down");
+            col.style.setProperty("--dur", (22 + c * 5) + "s");   // varied speeds
+            // Duplicate the column's tiles so translateY(-50%) loops seamlessly
+            bucket.forEach(it => col.appendChild(makeTile(it)));
+            bucket.forEach(it => col.appendChild(makeTile(it)));
+            cols.appendChild(col);
+          });
+        }
+
+        probeNext();
+      }
+    }
+
     // "View next" — the 3 projects after the current one in content.js order,
     // wrapping around, excluding the current project and any WIP ones.
     function renderViewNext(current) {
@@ -3847,6 +4064,7 @@
      * INIT
      * ════════════════════════════════════════════════════════════════ */
     renderProjects();
+    renderArchiveTeaser();
 
     // Handle redirect from 404.html (direct URL visits on GitHub Pages)
     const redirectPath = new URLSearchParams(window.location.search).get("p");
