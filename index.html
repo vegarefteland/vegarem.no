@@ -529,7 +529,7 @@
     .home-divider {
       height: 1px;
       background: var(--border);
-      margin: 46px 0 40px;
+      margin: 44px 0;
     }
 
     /* ─── Archive teaser (live scrolling wall, bottom of home) ─── */
@@ -1494,7 +1494,35 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-
+    /* Placeholder shown for whichever item is currently being fetched —
+       reserves real visible space (unlike the invisible, zero-height item
+       that exists while its image/video is still downloading) so scrolling
+       users always see "something is still coming" instead of a dead end. */
+    .project-skeleton {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 4px;
+      overflow: hidden;
+      background: var(--placeholder);
+    }
+    .project-skeleton::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.18) 50%,
+        rgba(255, 255, 255, 0) 70%);
+      background-size: 220% 100%;
+      animation: cardShimmer 1.6s ease-in-out infinite;
+    }
+    [data-theme="dark"] .project-skeleton::before {
+      background: linear-gradient(110deg,
+        rgba(255, 255, 255, 0) 30%,
+        rgba(255, 255, 255, 0.06) 50%,
+        rgba(255, 255, 255, 0) 70%);
+    }
 
     .project-img-grid {
       display: grid;
@@ -2044,7 +2072,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jul 8. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jul 11. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.2</p>
           </div>
@@ -2440,12 +2468,31 @@
 
       lbLoadingActive = true;
 
+      // Shared loading-placeholder — the whole image chain (top-level items,
+      // flush-group items, subfolder rows) is one continuous sequential
+      // fetch, so a single "currently pending" skeleton is always enough.
+      // showSkeleton() always retires any previous one first, so callers
+      // never need to worry about stale skeletons when a new fetch begins.
+      let pendingSkeleton = null;
+      function showSkeleton(parent) {
+        clearSkeleton();
+        const sk = document.createElement("div");
+        sk.className = "project-skeleton";
+        sk.setAttribute("aria-hidden", "true");
+        parent.appendChild(sk);
+        pendingSkeleton = sk;
+        return sk;
+      }
+      function clearSkeleton() {
+        if (pendingSkeleton) { pendingSkeleton.remove(); pendingSkeleton = null; }
+      }
+
       let projIndex = 1;
       let projMisses = 0;
       const MAX_MISSES = 1;
 
       function loadNextProjectItem() {
-        if (projMisses >= MAX_MISSES) { lbLoadingActive = false; initBackToTop(); renderViewNext(project); return; }
+        if (projMisses >= MAX_MISSES) { clearSkeleton(); lbLoadingActive = false; initBackToTop(); renderViewNext(project); return; }
         const i = projIndex++;
         const num  = String(i).padStart(2, "0");
         const base = `images/projects/${project.folder}/${num}`;
@@ -2455,6 +2502,8 @@
         const jpeg = `${base}.jpeg`;
         const png  = `${base}.png`;
         const gif  = `${base}.gif`;
+
+        showSkeleton(project.layout === "grid" ? container : right);
 
         const subFormats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
 
@@ -2467,7 +2516,7 @@
         function probeSubfolderRow() {
           let subFmt = 0;
           const probe = new Image();
-          probe.onload = () => { projMisses = 0; loadSubfolderRow(base, probe); };
+          probe.onload = () => { clearSkeleton(); projMisses = 0; loadSubfolderRow(base, probe); };
           probe.onerror = () => {
             subFmt++;
             if (subFmt < subFormats.length) probe.src = `${base}/01${subFormats[subFmt]}`;
@@ -2478,6 +2527,7 @@
 
         function loadNormalItem() {
         const target = project.layout === "grid" ? container : right;
+        showSkeleton(target);
 
         const item = document.createElement("div");
         item.className = project.layout === "grid" ? "project-img-item" : "project-hero";
@@ -2506,6 +2556,7 @@
           img.decoding = "async";
           if (i === 1) img.setAttribute("fetchpriority", "high");
           img.onload = () => {
+            clearSkeleton();
             projMisses = 0;
             item.classList.add("loaded");
             item.dataset.revealIdx = revealIndex++;
@@ -2529,6 +2580,7 @@
         }
 
         video.addEventListener("canplay", () => {
+          clearSkeleton();
           projMisses = 0;
           item.classList.add("loaded");
           item.dataset.revealIdx = revealIndex++;
@@ -2654,6 +2706,7 @@
         const ratios = [];   // aspect ratios for each image in this row
 
         function addSubItem(img) {
+          clearSkeleton();
           const item = document.createElement("div");
           item.className = "project-img-item";
           img.alt = "";
@@ -2676,6 +2729,7 @@
           const subBase = `${rowBase}/${subNum}`;
           const sFormats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
           let sFmt = 0;
+          showSkeleton(rowGrid);
           const img = new Image();
           img.onload = () => { addSubItem(img); loadNextSubItem(); };
           img.onerror = () => {
@@ -2760,6 +2814,7 @@
         }
 
         function addItem(item) {
+          clearSkeleton();
           item.classList.add("loaded");
           item.dataset.revealIdx = revealIndex++;
           container.appendChild(item);
@@ -2780,6 +2835,7 @@
           let subIdx = 1; // firstImg is already 01; start probing from 02
 
           function addSub(img) {
+            clearSkeleton();
             const item = document.createElement("div");
             item.className = "project-img-item";
             img.alt = ""; img.loading = "eager"; img.decoding = "async";
@@ -2798,6 +2854,7 @@
             const sub = String(subIdx).padStart(2, "0");
             const sBase = `${rowBase}/${sub}`;
             let f = 0;
+            showSkeleton(rowGrid);
             const img = new Image();
             img.onload = () => { addSub(img); nextSub(); };
             img.onerror = () => {
@@ -2819,6 +2876,8 @@
           // First item probes only .webp for subfolder/image detection so a
           // non-group slot bails quickly; later items try every format.
           const formats = k === 1 ? [".webp"] : gFormats;
+
+          showSkeleton(container);
 
           // 1) Nested subfolder row?  (kk/01.*)
           let subFmt = 0;
