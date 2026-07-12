@@ -59,10 +59,7 @@ const SITE = {
         "School assignments and concept design work.",
     },
     {
-      title: "Modular cd /Users/vegarefteland/Desktop/vegarem.no
-git add .
-git commit -m "Update"
-git pushDesk Interface – 3D Modeling",
+      title: "Modular Desk Interface – 3D Modeling",
       folder: "04",
       cover: "images/projects/04/cover.webp",
       color: "#3D4A5C",
