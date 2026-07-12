@@ -402,7 +402,7 @@
     .project-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: var(--gap);
+      gap: 14px;
       padding: 0;
     }
 
@@ -523,111 +523,6 @@
     }
     .project-card:hover::after {
       background: rgba(0, 0, 0, 0.04);
-    }
-
-    /* ─── Divider between projects and the archive teaser ─── */
-    .home-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 44px 0;
-    }
-
-    /* ─── Archive teaser (live scrolling wall, bottom of home) ─── */
-    .archive-teaser {
-      position: relative;
-      display: block;
-      height: clamp(200px, 26vw, 320px);
-      border-radius: 4px;
-      overflow: hidden;
-      background: #ffffff;
-      cursor: pointer;
-      text-decoration: none;
-      transition: box-shadow 250ms ease;
-    }
-    .archive-teaser:hover { box-shadow: var(--hover-shadow); }
-    .archive-teaser:focus-visible { outline: 2px solid var(--nav-fg); outline-offset: 3px; }
-
-    /* Black in dark mode */
-    [data-theme="dark"] .archive-teaser { background: #000; }
-
-    /* Soft blur at the top & bottom edges, fading to sharp in the middle */
-    .archive-teaser::before,
-    .archive-teaser::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      height: 90px;
-      z-index: 1;
-      pointer-events: none;
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-    }
-    .archive-teaser::before {
-      top: 0;
-      -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
-      mask-image: linear-gradient(to bottom, #000, transparent);
-    }
-    .archive-teaser::after {
-      bottom: 0;
-      -webkit-mask-image: linear-gradient(to top, #000, transparent);
-      mask-image: linear-gradient(to top, #000, transparent);
-    }
-
-    .archive-teaser-cols {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: flex-start;   /* let columns be taller than the banner */
-      gap: 18px;
-      padding: 20px;
-      transition: transform 550ms var(--ease-out);
-    }
-    /* Zoom the whole wall on hover, matching the project cards */
-    .archive-teaser:hover .archive-teaser-cols { transform: scale(1.03); }
-    /* Same arrow flick as the project cards */
-    .archive-teaser:hover .project-arrow svg {
-      animation: ring 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-      transform-origin: center;
-    }
-    .archive-teaser-col {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      height: max-content;
-      will-change: transform;
-    }
-    .archive-teaser-col.up   { animation: teaserUp   var(--dur, 26s) linear infinite; }
-    .archive-teaser-col.down { animation: teaserDown var(--dur, 26s) linear infinite; }
-
-    .archive-teaser-tile {
-      width: 100%;
-      border-radius: 3px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .archive-teaser-tile img,
-    .archive-teaser-tile video {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 3px;
-    }
-
-    /* Content is duplicated 2×, so -50% loops seamlessly */
-    @keyframes teaserUp   { from { transform: translateY(0); }     to { transform: translateY(-50%); } }
-    @keyframes teaserDown { from { transform: translateY(-50%); }  to { transform: translateY(0); } }
-
-    /* Fewer, calmer columns on small screens */
-    @media (max-width: 640px) {
-      .archive-teaser { height: clamp(150px, 42vw, 220px); }
-      .archive-teaser-col:nth-child(n+4) { display: none; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .archive-teaser-col { animation: none !important; }
     }
 
     /* ─── ── ABOUT PAGE ────────────────────────────────────────── */
@@ -1875,10 +1770,17 @@
       align-items: center;
       justify-content: center;
       pointer-events: all;
-      transition: opacity 320ms var(--ease-out);
+      /* Curtain clears fast so the cascade/nav choreography plays in the open,
+         not masked behind a slow white fade. */
+      transition: opacity 320ms var(--ease-out), background 200ms ease;
     }
     #intro.intro-exit {
       opacity: 0;
+      pointer-events: none;
+    }
+    /* Fly-to-nav exit: page shows through while the pill travels up to the nav */
+    #intro.reveal {
+      background: transparent;
       pointer-events: none;
     }
 
@@ -1937,8 +1839,29 @@
       60%, 100% { opacity: 0; }
     }
 
+    /* Choreographed intro handoff: as the name flies up into the nav, the
+       side pills drop in from above to meet it — everything converges. */
+    @keyframes navPillDrop {
+      from { opacity: 0; transform: translateY(-9px); }
+      to   { opacity: 1; transform: none; }
+    }
+    html.intro-revealing #nav-left  { animation: navPillDrop 460ms var(--ease-out) 90ms both; }
+    html.intro-revealing #nav-right { animation: navPillDrop 460ms var(--ease-out) 150ms both; }
+
+    /* Cards cascade in as the intro hands off — a stronger, slower entrance
+       than the normal load, played AFTER the curtain clears so it's never
+       masked. Per-card delay is set inline (see restartCardAnimations). */
+    @keyframes cardCascade {
+      from { opacity: 0; transform: translateY(38px) scale(0.96); }
+      to   { opacity: 1; transform: none; }
+    }
+    .project-card.intro-cascade { animation: cardCascade 480ms var(--ease-out) both; }
+
     @media (prefers-reduced-motion: reduce) {
       #intro, #intro-group { transition: none !important; }
+      html.intro-revealing #nav-left,
+      html.intro-revealing #nav-right { animation: none !important; }
+      .project-card.intro-cascade { animation: none !important; }
     }
   </style>
 </head>
@@ -1960,20 +1883,6 @@
        ══════════════════════════════════════════════════════════════ -->
   <main id="page-home" class="page active" role="main">
     <div class="project-grid" id="project-grid"></div>
-
-    <div class="home-divider" aria-hidden="true"></div>
-
-    <!-- Live archive shortcut: scrolling wall of real archive files -->
-    <a class="archive-teaser" id="archive-teaser" href="/archive"
-       role="button" tabindex="0" aria-label="View archive">
-      <div class="archive-teaser-cols" id="archive-teaser-cols" aria-hidden="true"></div>
-      <span class="project-label">Archive</span>
-      <div class="project-arrow" aria-hidden="true">
-        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-    </a>
   </main>
 
   <!-- ══════════════════════════════════════════════════════════════
@@ -2072,7 +1981,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Jul 11. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Jul 12. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v2.2</p>
           </div>
@@ -3072,104 +2981,6 @@
       SITE.projects.forEach(project => grid.appendChild(makeProjectCard(project)));
     }
 
-    // Live archive shortcut at the bottom of home — a wall of columns that
-    // scroll in alternating directions, built from a random subset of the
-    // real archive files. Lazy-built when scrolled near; reshuffles each load.
-    function renderArchiveTeaser() {
-      const host = document.getElementById("archive-teaser");
-      const cols = document.getElementById("archive-teaser-cols");
-      if (!host || !cols) return;
-
-      host.addEventListener("click", e => { e.preventDefault(); navigate("archive"); });
-      host.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("archive"); }
-      });
-
-      if (host.dataset.built) return;
-      const io = new IntersectionObserver((entries, obs) => {
-        if (entries.some(e => e.isIntersecting)) { obs.disconnect(); build(); }
-      }, { rootMargin: "700px 0px" });
-      io.observe(host);
-
-      function build() {
-        if (host.dataset.built) return;
-        host.dataset.built = "1";
-
-        const NUM_COLS = 5;
-        const TARGET = 20;                 // random subset size (lazy-loaded)
-        const formats = [".webp", ".jpg", ".jpeg", ".png", ".gif"];
-
-        // Shuffle 1–50, probe in shuffled order, keep the first TARGET that exist
-        const order = [];
-        for (let i = 1; i <= 50; i++) order.push(i);
-        for (let i = order.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [order[i], order[j]] = [order[j], order[i]];
-        }
-
-        const items = [];
-        let idx = 0;
-
-        function probeNext() {
-          if (items.length >= TARGET || idx >= order.length) { done(); return; }
-          const num = String(order[idx++]).padStart(2, "0");
-          let fmt = 0;
-          const img = new Image();
-          img.decoding = "async";
-          img.onload = () => { items.push({ type: "img", src: img.src }); probeNext(); };
-          img.onerror = () => {
-            fmt++;
-            if (fmt < formats.length) { img.src = `images/archive/${num}${formats[fmt]}`; }
-            else {
-              const mp4 = `images/archive/${num}.mp4`;
-              fetch(mp4, { method: "HEAD" })
-                .then(r => { if (r.ok) items.push({ type: "video", src: mp4 }); probeNext(); })
-                .catch(() => probeNext());
-            }
-          };
-          img.src = `images/archive/${num}${formats[0]}`;
-        }
-
-        function makeTile(it) {
-          const tile = document.createElement("div");
-          tile.className = "archive-teaser-tile";
-          let el;
-          if (it.type === "video") {
-            el = document.createElement("video");
-            el.autoplay = true; el.muted = true; el.loop = true; el.playsInline = true;
-            el.setAttribute("playsinline", ""); el.setAttribute("preload", "metadata");
-            el.src = it.src;
-          } else {
-            el = document.createElement("img");
-            el.alt = ""; el.decoding = "async"; el.loading = "lazy";
-            el.src = it.src;
-          }
-          tile.appendChild(el);
-          return tile;
-        }
-
-        function done() {
-          if (!items.length) { host.style.display = "none"; return; }
-          const buckets = Array.from({ length: NUM_COLS }, () => []);
-          items.forEach((it, i) => buckets[i % NUM_COLS].push(it));
-
-          cols.innerHTML = "";
-          buckets.forEach((bucket, c) => {
-            if (!bucket.length) return;
-            const col = document.createElement("div");
-            col.className = "archive-teaser-col " + (c % 2 === 0 ? "up" : "down");
-            col.style.setProperty("--dur", (22 + c * 5) + "s");   // varied speeds
-            // Duplicate the column's tiles so translateY(-50%) loops seamlessly
-            bucket.forEach(it => col.appendChild(makeTile(it)));
-            bucket.forEach(it => col.appendChild(makeTile(it)));
-            cols.appendChild(col);
-          });
-        }
-
-        probeNext();
-      }
-    }
-
     // "View next" — the 3 projects after the current one in content.js order,
     // wrapping around, excluding the current project and any WIP ones.
     function renderViewNext(current) {
@@ -4123,7 +3934,6 @@
      * INIT
      * ════════════════════════════════════════════════════════════════ */
     renderProjects();
-    renderArchiveTeaser();
 
     // Handle redirect from 404.html (direct URL visits on GitHub Pages)
     const redirectPath = new URLSearchParams(window.location.search).get("p");
@@ -4192,27 +4002,61 @@
       function restartCardAnimations() {
         const cards = document.querySelectorAll(".project-card");
         cards.forEach((card, i) => {
+          card.classList.add("intro-cascade");   // switch to the stronger cascade
           card.style.animation = "none";
-          void card.offsetWidth;
-          card.style.animation = "";
-          card.style.animationDelay = (i * 35) + "ms";
+          void card.offsetWidth;                  // reflow → restart the animation
+          card.style.animation = "";              // revert to .intro-cascade rule
+          // Start right as the 200ms curtain clears, staggered clearly so it
+          // reads as a choreographed cascade, not a pop-in.
+          card.style.animationDelay = (150 + i * 60) + "ms";
         });
+      }
+
+      function finishIntro() {
+        intro.style.display = "none";
+        sessionStorage.setItem("introSeen", "1");
+        document.documentElement.classList.add("intro-done");
       }
 
       function exitIntro() {
         introCursor.classList.add("hidden");
-        introGroup.classList.add("intro-exit");
-        setTimeout(() => {
-          // Reset cards NOW while intro still fully covers the page,
-          // so they animate in fresh as the overlay fades out
-          restartCardAnimations();
-          intro.classList.add("intro-exit");
+
+        const navPill = document.querySelector(".nav-pill-center");
+        const navRect = navPill ? navPill.getBoundingClientRect() : null;
+        const canFly  = navRect && navRect.width > 0 &&
+                        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        if (canFly) {
+          // Fly the intro pill up to the real nav pill's exact spot, revealing
+          // the page behind it — then hand off to the (identical) nav pill.
+          const from = introGroup.getBoundingClientRect();
+          const dx = (navRect.left + navRect.width  / 2) - (from.left + from.width  / 2);
+          const dy = (navRect.top  + navRect.height / 2) - (from.top  + from.height / 2);
+
+          navPill.style.opacity = "0";        // hide the real one so they don't double up
+          document.documentElement.classList.add("intro-revealing"); // side pills drop in
+          restartCardAnimations();            // cards cascade in, overlapping the flight
+          intro.classList.add("reveal");      // background → transparent
+
+          introGroup.style.transition = "transform 620ms var(--ease-out)";
+          requestAnimationFrame(() => {
+            introGroup.style.transform = `translate(${dx}px, ${dy}px)`;
+          });
+
           setTimeout(() => {
-            intro.style.display = "none";
-            sessionStorage.setItem("introSeen", "1");
-            document.documentElement.classList.add("intro-done");
-          }, 340);
-        }, 200);
+            finishIntro();
+            navPill.style.opacity = "";        // real nav pill takes over, same spot
+          }, 640);
+          // Clean up the transient reveal class once the entrance has settled
+          setTimeout(() => document.documentElement.classList.remove("intro-revealing"), 1150);
+        } else {
+          // Fallback (mobile / reduced-motion / no nav pill): quick curtain,
+          // then the same pronounced card cascade so it's not a bare pop-in.
+          restartCardAnimations();
+          introGroup.classList.add("intro-exit");
+          intro.classList.add("intro-exit");    // overlay fades out
+          setTimeout(finishIntro, 380);
+        }
       }
 
       // Kick off
