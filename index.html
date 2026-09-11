@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20260909133859" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20260911204423" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,7 +149,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20260909133859";
+    var MANIFEST_V = "20260911204423";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -2068,6 +2068,88 @@
       border-bottom-right-radius: var(--proj-radius);
     }
 
+    /* ── Book (NN_book folders) ─────────────────────────────────────
+       One photographed state of the book at a time, stepped with previous /
+       next. The pages are photos of the bound object — spiral and shadow
+       included — so they're shown whole rather than split into halves for a
+       3D page curl, which would cut the photo of the binding down the middle.
+       Pages swap instantly, and the book flips through itself on its own
+       until the reader turns a page. Black ground to match the photographs. */
+    .book { position: relative; background: #000; outline: none; user-select: none; -webkit-user-select: none; }
+    .book-stage { position: relative; width: 100%; overflow: hidden; }
+    .book .book-page {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      /* Narrower than the frame (see BOOK_SCALE) and centred; the frame is
+         shorter than the photo, so its top and bottom fall outside and are
+         clipped by the stage. */
+      width: calc(var(--book-scale, 1) * 100%);
+      height: auto;
+      max-width: none;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .book .book-page.is-current { opacity: 1; }
+    /* Click the left half to go back, the right half to go on — like
+       reaching for the edge of a real page. */
+    .book-hit {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      z-index: 1;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+    .book-hit.prev { left: 0; }
+    .book-hit.next { right: 0; }
+    .book-hit:disabled { cursor: default; }
+    /* Arrows on the left and right edges, centred on the height. Placed
+       with top rather than a translateY: .icon-btn scales itself on :active
+       via transform, and a translate here would be overwritten mid-press. */
+    .book .book-nav { position: absolute; top: calc(50% - 15px); z-index: 2; }
+    .book .book-nav.prev { left: 12px; }
+    .book .book-nav.next { right: 12px; }
+    .book .icon-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
+    /* Page number bottom-left, autoplay toggle bottom-right — same pill. */
+    .book-count,
+    .book-auto {
+      position: absolute;
+      bottom: 12px;
+      z-index: 2;
+      margin: 0;
+      height: 30px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      border-radius: 100px;
+      font-family: var(--font);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--pill-ink);
+      background: var(--pill-bg, var(--nav-bg));
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      border: 1px solid rgba(0, 0, 0, 0.07);
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+      white-space: nowrap;
+    }
+    [data-theme="dark"] .book-count,
+    [data-theme="dark"] .book-auto { border-color: rgba(255, 255, 255, 0.07); }
+    .book-count { left: 12px; }
+    .book-auto {
+      right: 12px;
+      cursor: pointer;
+      transition: opacity 180ms ease;
+    }
+    .book-auto:hover { opacity: 0.75; }
+    .book-auto:focus-visible { outline: 2px solid var(--pill-ink); outline-offset: 2px; }
+    .book:focus-visible .book-stage { box-shadow: inset 0 0 0 2px var(--pill-ink); }
+
     .project-hero.revealed,
     .project-img-item.revealed {
       animation: projectReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -3067,7 +3149,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Sep 9. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Sep 11. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.0</p>
           </div>
@@ -3544,6 +3626,241 @@
       return row;
     }
 
+    /* ════════════════════════════════════════════════════════════════
+     * BOOK — any folder named NN_book (e.g. 01A/09_Book/) becomes a book:
+     * its numbered pages are shown one at a time with previous / next.
+     * Shared by the manifest path, the probing fallback and focus mode.
+     * ════════════════════════════════════════════════════════════════ */
+    function buildBook(pages) {
+      const n = pages.length;
+      const chevL = `<svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2L2.5 6L7.5 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const chevR = `<svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2L9.5 6L4.5 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+      const book = document.createElement("div");
+      book.className = "book";
+      book.tabIndex = 0;                        // so the arrow keys can reach it
+      book.setAttribute("role", "group");
+      book.setAttribute("aria-roledescription", "book");
+      book.setAttribute("aria-label", `Book, ${n} pages. Use the arrow keys to turn.`);
+      book._pages = pages;                      // focus mode rebuilds from this
+
+      const stage = document.createElement("div");
+      stage.className = "book-stage";
+      const p0 = pages[0];
+      // The photos sit on pure black, and so does the book frame, so the
+      // photo can be shrunk inside the frame without any visible edge.
+      //   BOOK_SCALE — how wide the photo is relative to the frame (smaller
+      //                book, more black either side)
+      //   BOOK_CROP  — how much of the photo's height to trim off the top
+      //                and bottom each. The Knurr pages have ~15% of black
+      //                there, so keep this under ~0.14 or it cuts the book.
+      const BOOK_SCALE = 0.82;
+      const BOOK_CROP  = 0.09;
+      book.style.setProperty("--book-scale", BOOK_SCALE);
+      // Sized from the manifest before anything downloads, so the page never
+      // jumps when the first image arrives.
+      stage.style.aspectRatio = (p0.w && p0.h)
+        ? `${p0.w} / ${Math.round(p0.h * BOOK_SCALE * (1 - 2 * BOOK_CROP))}`
+        : "2.2 / 1";
+      book.appendChild(stage);
+
+      const imgs = pages.map((p, i) => {
+        const img = document.createElement("img");
+        img.className = "book-page";
+        img.alt = `Page ${i + 1} of ${n}`;
+        img.decoding = "async";
+        img.draggable = false;
+        img.dataset.src = p.src;
+        stage.appendChild(img);
+        return img;
+      });
+      // Only the page on show and its neighbour are fetched; the rest load as
+      // they're approached, so a 23-page book costs two images up front.
+      const load = i => { const img = imgs[i]; if (img && !img.getAttribute("src")) img.src = img.dataset.src; };
+
+      function makeHit(cls, label) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "book-hit " + cls;
+        b.setAttribute("aria-label", label);
+        b.tabIndex = -1;                          // the pill buttons are the keyboard route
+        stage.appendChild(b);
+        return b;
+      }
+      function makeBtn(icon, label) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "icon-btn";
+        b.innerHTML = icon;
+        b.setAttribute("aria-label", label);
+        return b;
+      }
+      const hitPrev = makeHit("prev", "Previous page");
+      const hitNext = makeHit("next", "Next page");
+
+      const prevBtn = makeBtn(chevL, "Previous page");
+      prevBtn.classList.add("book-nav", "prev");
+      const nextBtn = makeBtn(chevR, "Next page");
+      nextBtn.classList.add("book-nav", "next");
+      const count = document.createElement("span");
+      count.className = "book-count";
+      const autoBtn = document.createElement("button");
+      autoBtn.type = "button";
+      autoBtn.className = "book-auto";
+      book.append(prevBtn, nextBtn, count, autoBtn);
+
+      // `want` is the page asked for, `cur` the page actually on screen. They
+      // differ only for the moment it takes the requested page to decode,
+      // which lets fast clicks count straight away while the picture follows.
+      let cur = 0, want = 0, seq = 0;
+      function sync() {
+        count.textContent = `${want + 1} / ${n}`;
+        prevBtn.disabled = hitPrev.disabled = want === 0;
+        nextBtn.disabled = hitNext.disabled = want === n - 1;
+      }
+
+      function go(to) {
+        if (to < 0 || to >= n || to === want) return;
+        want = to;
+        sync();
+        const mine = ++seq;
+        const into = imgs[to];
+        load(to);
+        // The current page stays up until the new one is *decoded*, then the
+        // two swap in the same frame. Swapping sooner showed an <img> with
+        // nothing painted yet — on a black frame, that's the black flash.
+        // A page sitting at opacity 0 usually hasn't been decoded, so even
+        // an already-downloaded one flashed; img.complete doesn't catch it.
+        const show = () => {
+          if (mine !== seq) return;               // a later turn got there first
+          into.classList.add("is-current");
+          if (imgs[cur] !== into) imgs[cur].classList.remove("is-current");
+          cur = to;
+          load(to + 1);                           // neighbours both ways, so the
+          load(to - 1);                           // next turn is usually instant
+        };
+        (into.decode ? into.decode() : Promise.resolve()).then(show, show);
+      }
+
+      // Every control stops the click here: the book sits inside project
+      // items and focus mode, which both have click handlers of their own.
+      // A turn by hand switches autoplay off (the toggle can put it back).
+      function take(to) { stopAuto(); go(to); }
+      const turn = (e, step) => { e.stopPropagation(); take(want + step); };
+      hitPrev.addEventListener("click", e => { book.focus({ preventScroll: true }); turn(e, -1); });
+      hitNext.addEventListener("click", e => { book.focus({ preventScroll: true }); turn(e, 1); });
+      prevBtn.addEventListener("click", e => turn(e, -1));
+      nextBtn.addEventListener("click", e => turn(e, 1));
+      book.addEventListener("click", e => e.stopPropagation());
+
+      book.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight") { e.preventDefault(); take(want + 1); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); take(want - 1); }
+        else if (e.key === "Home") { e.preventDefault(); take(0); }
+        else if (e.key === "End") { e.preventDefault(); take(n - 1); }
+      });
+
+      // Horizontal swipe on touch. Lenis only claims vertical gestures, so a
+      // sideways drag reaches us; preventing the touchend also cancels the
+      // synthetic click, which would otherwise turn a second page.
+      let tx = 0, ty = 0;
+      stage.addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
+      stage.addEventListener("touchend", e => {
+        const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) { e.preventDefault(); take(want + (dx < 0 ? 1 : -1)); }
+      }, { passive: false });
+
+      /* ── Autoplay ───────────────────────────────────────────────────
+         Flips through on its own, looping. The Auto button switches it on
+         and off; turning a page by hand switches it off. Runs only while the
+         book is on screen, and waits for the next page to have loaded before
+         swapping — with no fade to hide it, an unloaded page would flash
+         black. Starts off for reduced-motion users (they can switch it on). */
+      const AUTO_MS = 750;
+      let autoOn = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let autoTimer = null, inView = false;
+      const ready = img => img.complete && img.naturalWidth > 0;
+
+      function detached() {
+        // The project page was torn down — stop everything on this book.
+        if (book.isConnected) return false;
+        pauseAuto();
+        io.disconnect();
+        return true;
+      }
+      function tick() {
+        if (detached()) return;
+        const next = (want + 1) % n;
+        load(next);
+        if (!ready(imgs[next])) return;           // try again next tick
+        go(next);
+        load((next + 1) % n);                     // wraps, so page 1 is ready for the loop
+      }
+      function startAuto() {
+        if (autoOn && inView && !autoTimer) autoTimer = setInterval(tick, AUTO_MS);
+      }
+      function pauseAuto() { clearInterval(autoTimer); autoTimer = null; }
+      function setAuto(on) {
+        autoOn = on;
+        autoBtn.textContent = on ? "Auto on" : "Auto off";
+        autoBtn.setAttribute("aria-pressed", on ? "true" : "false");
+        autoBtn.setAttribute("aria-label", on ? "Autoplay on — turn off" : "Autoplay off — turn on");
+        // Announce page changes only when a person is turning them —
+        // autoplay would otherwise have a screen reader reading every tick.
+        count.setAttribute("aria-live", on ? "off" : "polite");
+        if (on) startAuto(); else pauseAuto();
+      }
+      function stopAuto() { if (autoOn) setAuto(false); }
+      autoBtn.addEventListener("click", e => { e.stopPropagation(); setAuto(!autoOn); });
+
+      const io = new IntersectionObserver(entries => {
+        if (detached()) return;
+        inView = entries[0].isIntersecting;
+        if (inView) startAuto(); else pauseAuto();
+      }, { threshold: 0.35 });
+      io.observe(book);
+      setAuto(autoOn);
+
+      load(0);
+      load(1);
+      imgs[0].classList.add("is-current");
+      sync();
+      return book;
+    }
+
+    /* Fallback path only (no manifest — e.g. index.html opened straight from
+       disk): the folder can't be listed, so its pages are found by probing
+       base + "_Book"/"_book" for 01, 02 … Resolves to [{src,w,h}] or null. */
+    function probeBookPages(base) {
+      const exts = [".webp", ".jpg", ".png"];
+      const probe = src => new Promise(res => {
+        const i = new Image();
+        i.onload = () => res({ src, w: i.naturalWidth, h: i.naturalHeight });
+        i.onerror = () => res(null);
+        i.src = src;
+      });
+      const firstHit = async prefix => {
+        for (const e of exts) { const r = await probe(prefix + e); if (r) return { r, e }; }
+        return null;
+      };
+      return (async () => {
+        for (const sfx of ["_Book", "_book"]) {
+          const dir = base + sfx;
+          const first = await firstHit(`${dir}/01`);
+          if (!first) continue;
+          const pages = [first.r];
+          for (let i = 2; ; i++) {
+            const num = String(i).padStart(2, "0");
+            const hit = (await probe(`${dir}/${num}${first.e}`)) || ((await firstHit(`${dir}/${num}`)) || {}).r;
+            if (!hit) break;
+            pages.push(hit);
+          }
+          return pages;
+        }
+        return null;
+      })();
+    }
+
     /* Big centre play/pause for *_player.mp4. Shared by both render paths
        so the two can't drift apart. Owns nothing but the button — the
        volume bar below is built separately. */
@@ -3866,9 +4183,22 @@
           return rowGrid;
         }
 
+        // A book slot — see buildBook.
+        function addBook(node, parent) {
+          const item = document.createElement("div");
+          item.className = "project-img-item project-book";
+          item.appendChild(buildBook(node.pages));
+          item.classList.add("loaded");
+          item.dataset.revealIdx = revealIndex++;
+          parent.appendChild(item);
+          if (projRevealObs) projRevealObs.observe(item);
+        }
+
         function walk(list, parent, itemClass) {
           list.forEach(node => {
-            if (node.type === "group") {
+            if (node.type === "book") {
+              addBook(node, parent);
+            } else if (node.type === "group") {
               const g = document.createElement("div");
               g.className = "project-flush-group";
               parent.appendChild(g);
@@ -4345,10 +4675,34 @@
           nextSub();
         }
 
+        // A slot can also carry a book (kk_book/). It's probed as the slot
+        // starts and shown once the slot's own item is in, so the order
+        // matches the manifest path: the item first, then the book.
+        let slotBook = Promise.resolve(null);
+
+        function addBookItem(pages) {
+          clearSkeleton();
+          const item = document.createElement("div");
+          item.className = "project-img-item project-book";
+          item.appendChild(buildBook(pages));
+          item.classList.add("loaded");
+          item.dataset.revealIdx = revealIndex++;
+          container.appendChild(item);
+          if (projRevealObs) projRevealObs.observe(item);
+          count++;
+        }
+
         function nextItem() {
+          const pending = slotBook;
+          slotBook = Promise.resolve(null);
+          pending.then(pages => { if (pages) addBookItem(pages); advance(); });
+        }
+
+        function advance() {
           k++;
           const kn = String(k).padStart(2, "0");
           const itemBase = `${groupBase}/${kn}`;
+          slotBook = probeBookPages(itemBase);
           // First item probes only .webp for subfolder/image detection so a
           // non-group slot bails quickly; later items try every format.
           const formats = k === 1 ? [".webp"] : gFormats;
@@ -4399,7 +4753,16 @@
             img.onload = () => addItem(makeGroupImage(img));
             img.onerror = () => {
               if (fmt + 1 < formats.length) tryImage(fmt + 1);
-              else done(count > 0);
+              else {
+                // Empty slot — but it may still hold a book, which keeps the
+                // group going rather than ending it here.
+                const pending = slotBook;
+                slotBook = Promise.resolve(null);
+                pending.then(pages => {
+                  if (pages) { addBookItem(pages); advance(); }
+                  else done(count > 0);
+                });
+              }
             };
             img.src = `${itemBase}${formats[fmt]}`;
           }
@@ -6054,6 +6417,7 @@
       // Collect all loaded clickable media (images + videos) on the current page
       const sel = '.archive-img img, .archive-img video, .project-hero img, .project-hero video, .project-img-item img, .project-img-item video';
       const items = Array.from(document.querySelectorAll(sel))
+        .filter(el => !el.closest(".book"))   // book pages turn, they don't open
         .filter(el => el.tagName === "VIDEO" ? el.videoWidth > 0 : el.naturalWidth > 0);
 
       // Masonry reflows file order into columns, so DOM order doesn't match
@@ -6608,6 +6972,9 @@
                 gc.classList.contains("project-img-grid")) {
               const row = buildFocusRow(gc);
               if (row) groupItem.appendChild(row);
+            } else if (gc.querySelector(".book")) {
+              // A fresh, working book rather than a still of its first page.
+              groupItem.appendChild(buildBook(gc.querySelector(".book")._pages));
             } else {
               const el = gc.querySelector("img, video");
               if (el) groupItem.appendChild(cloneMedia(el));
@@ -6627,6 +6994,8 @@
           const row = buildFocusRow(child);
           if (!row) return;
           item.appendChild(row);
+        } else if (child.querySelector(".book")) {
+          item.appendChild(buildBook(child.querySelector(".book")._pages));
         } else {
           // Single hero image or video
           const el = child.querySelector("img, video");
