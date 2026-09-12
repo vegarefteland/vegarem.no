@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20260912142131" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20260912190200" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,7 +149,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20260912142131";
+    var MANIFEST_V = "20260912190200";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -518,7 +518,7 @@
        the nav so the two never read as one cluster. */
     .contact-pop {
       position: fixed;
-      left: 24px;
+      right: 24px;
       bottom: 24px;
       z-index: 300;            /* over the page, under the lightbox (500) */
       display: none;
@@ -7373,9 +7373,9 @@
         if (sessionStorage.getItem(SEEN)) return;
         if (!wideEnough()) { setTimeout(show, RETRY); return; }
         // Two places it would be in the way rather than useful: the About
-        // page already shows the contact details, and the archive sandbox
-        // puts its folder in exactly this corner. Wait it out instead of
-        // giving up — they may well move on.
+        // page already shows the contact details, and the archive sandbox is
+        // a full-screen mode you're meant to play with uninterrupted. Wait it
+        // out instead of giving up — they may well move on.
         if (currentPage === "about" ||
             document.documentElement.classList.contains("archive-sandbox")) {
           setTimeout(show, RETRY);
