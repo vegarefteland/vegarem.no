@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20260911204423" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20260912142131" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -149,7 +149,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20260911204423";
+    var MANIFEST_V = "20260912142131";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -1992,6 +1992,29 @@
       margin-top: 18px;
     }
 
+    /* Links inside a project description — e.g. a collaborator's site.
+       Takes the text colour rather than the browser's default blue, and
+       fades on hover like the contact links on the About page. */
+    .project-desc a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-thickness: 1px;
+      transition: opacity 180ms ease;
+    }
+    .project-desc a:hover { opacity: 0.5; }
+    /* Same 11px arrow at the same weight as the About page's contact links.
+       Deliberately inline rather than the inline-flex those use: this link
+       sits mid-sentence and has to wrap across lines like ordinary text. */
+    .project-desc a svg {
+      width: 11px;
+      height: 11px;
+      display: inline-block;
+      vertical-align: baseline;
+      margin-left: 3px;
+      opacity: 0.45;
+    }
+
     /* Secondary paragraphs — muted "tools/note" style */
     .project-desc .desc-note {
       font-size: 13.5px;
@@ -3149,7 +3172,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Sep 11. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Sep 12. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.0</p>
           </div>
