@@ -22,25 +22,27 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20260912190200" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20260914004636" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Inconsolata:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
+       third party, no preconnect round-trip, and the face is under our own
+       cache headers. Preloaded because the @font-face below is used by the
+       intro, which paints immediately. -->
+  <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 
   <!-- Critical: runs before first paint — theme + intro cover -->
   <style>
+    /* One variable file covers every weight the site uses (300/400/600)
+       instead of three static cuts — 68 KB total. Installed from the
+       `geist` npm package (v1.7.2), which is the full-glyph-set build
+       Vercel recommends; the package itself is a Next.js helper and isn't
+       shipped here, only the font it contains. Licence in fonts/. */
     @font-face {
-      font-family: 'Alte Haas Grotesk';
-      src: url('Fonts/AlteHaasGroteskRegular.ttf') format('truetype');
-      font-weight: 400;
-      font-display: swap;
-    }
-    @font-face {
-      font-family: 'Alte Haas Grotesk';
-      src: url('Fonts/AlteHaasGroteskBold.ttf') format('truetype');
-      font-weight: 700;
+      font-family: 'Geist';
+      src: url('fonts/Geist-Variable.woff2') format('woff2-variations');
+      font-weight: 100 900;
+      font-style: normal;
       font-display: swap;
     }
 
@@ -149,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20260912190200";
+    var MANIFEST_V = "20260914004636";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -224,7 +226,11 @@
       --hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
       --gap:        6px;
       --proj-radius: 10px;  /* outer corner rounding of the whole project block */
-      --font:       'IBM Plex Sans', system-ui, sans-serif;
+      /* Geist, self-hosted — see the @font-face at the top of the file
+         and fonts/. Swapping this token is no longer enough on its own:
+         a different family needs its own @font-face (or a Google Fonts
+         link restored in <head>). */
+      --font:       'Geist', system-ui, sans-serif;
       --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
       --theme-transition: 350ms ease;
     }
@@ -274,11 +280,13 @@
       font-family: var(--font);
       font-size: 16px;
       line-height: 1.5;
-      /* IBM Plex Sans sets fairly open by default. In em so it scales with
-         type size — the tightening stays proportional on a 30px title and a
-         12px pill instead of crushing the small text. The two labels that set
-         their own tracking (sandbox hint, orbit caption) are loose on purpose
-         and override this. */
+      /* Tightening carried over from IBM Plex Sans, which sets fairly open.
+         Geist is a neo-grotesque and already sets tighter, so this may now
+         be over-tightening — worth judging by eye before keeping it.
+         In em so it scales with type size: the tightening stays proportional
+         on a 30px title and a 12px pill instead of crushing the small text.
+         The two labels that set their own tracking (sandbox hint, orbit
+         caption) are loose on purpose and override this. */
       letter-spacing: -0.012em;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -1052,42 +1060,6 @@
       border-top: 1px solid rgba(127, 127, 127, 0.22);
       padding-top: 12px;
       margin-top: 4px;
-    }
-    /* Font picker — each button previews its own font with "Aa" */
-    .customize-fonts {
-      display: flex;
-      gap: 6px;
-    }
-    .font-preset {
-      min-width: 26px;
-      height: 22px;
-      padding: 0 6px;
-      border: 1px solid currentColor;
-      border-radius: 11px;
-      background: transparent;
-      color: var(--nav-fg);
-      font-size: 12.5px;
-      font-weight: 400;
-      line-height: 1;
-      cursor: pointer;
-      opacity: 0.4;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 180ms ease, transform 180ms var(--ease-out);
-    }
-    .font-preset:hover { opacity: 0.75; transform: scale(1.06); }
-    .font-preset.active { opacity: 1; }
-    /* Serifs read smaller at the same font-size — bump the preview up */
-    .font-preset[data-font*="Alte Haas"] { font-size: 15px; }
-    /* Alte Haas Grotesk: uppercase with italic pills. */
-    [data-font="altehaas"] body,
-    [data-font="altehaas"] body * {
-      letter-spacing: 0.03em;
-    }
-    .font-preset:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 2px rgba(127, 127, 127, 0.4);
     }
     /* Hint at the bottom of the panel — explains how to leave custom mode */
     .customize-note {
@@ -3164,7 +3136,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Typography</p>
-              <p class="info-text">Set in IBM Plex Sans Light 300 & Regular 400 by Mike Abbink & Bold Monday.</p>
+              <p class="info-text">Set in Geist Light 300 &amp; Regular 400 by Vercel.</p>
             </div>
             <div class="info-section">
               <p class="info-label">Date of Birth</p>
@@ -3172,7 +3144,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Sep 12. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Sep 14. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.0</p>
           </div>
@@ -6737,10 +6709,6 @@
       const navInput = document.getElementById("customize-nav-input");
       if (bgInput)  bgInput.value  = stored.bg  || "#ffffff";
       if (navInput) navInput.value = stored.nav || "#ffffff";
-      // Highlight the active font button
-      document.querySelectorAll(".font-preset").forEach(b => {
-        b.classList.toggle("active", b.getAttribute("data-font") === stored.font);
-      });
     }
 
     function enterCustomMode() {
@@ -6860,17 +6828,6 @@
           data.pill = b.getAttribute("data-pill");
           try { localStorage.setItem("customColors", JSON.stringify(data)); } catch (e) {}
           applyPillStyle();
-        });
-      });
-
-      // Font picker — swap the global --font (preserves colors)
-      panel.querySelectorAll(".font-preset").forEach(p => {
-        p.addEventListener("click", () => {
-          const data = getCustomColors();
-          data.font = p.getAttribute("data-font");
-          try { localStorage.setItem("customColors", JSON.stringify(data)); } catch (e) {}
-          applyCustomColors();
-          applyPillStyle();   // the surface follows the colour, so re-derive the ink
         });
       });
 

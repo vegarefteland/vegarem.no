@@ -19,7 +19,7 @@ const SITE = {
    * ────────────────────────────────────────────────────────────── */
   projects: [
     {
-       title: "Knurr Display © Typeface",
+       title: "Knurr Display – Typeface & Type Specimen",
       folder: "06",
       cover: "images/projects/06/cover.mp4",
       color: "#E8E0D5",
