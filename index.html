@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261001194639" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261001211422" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261001194639";
+    var MANIFEST_V = "20261001211422";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -843,6 +843,15 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0 40px;
+    }
+    /* Software runs down in two columns of four, so it's no longer twice
+       the height of Skills next to it. Filled top-to-bottom, then across. */
+    .software-cols {
+      display: grid;
+      grid-template-rows: repeat(4, auto);
+      grid-auto-flow: column;
+      grid-auto-columns: max-content;
+      column-gap: 16px;
     }
 
     .about-divider {
@@ -2605,29 +2614,6 @@
 
       <hr class="about-divider">
 
-      <div class="skills-row">
-        <div class="section-block">
-          <span class="section-tag">Software</span>
-          <div class="entry"><span>Photoshop</span></div>
-          <div class="entry"><span>Illustrator</span></div>
-          <div class="entry"><span>InDesign</span></div>
-          <div class="entry"><span>After Effects</span></div>
-          <div class="entry"><span>Premiere Pro</span></div>
-          <div class="entry"><span>Blender</span></div>
-          <div class="entry"><span>Glyphs 4</span></div>
-        </div>
-
-        <div class="section-block">
-          <span class="section-tag">Skills</span>
-          <div class="entry"><span>Graphic Design</span></div>
-          <div class="entry"><span>Motion Graphics</span></div>
-          <div class="entry"><span>3D Modeling</span></div>
-          <div class="entry"><span>Photography</span></div>
-        </div>
-      </div>
-
-      <hr class="about-divider">
-
       <div class="section-block" id="about-contact">
         <span class="section-tag">Contact</span>
         <div class="contact-grid">
@@ -2647,6 +2633,32 @@
             <p class="ci-label">Website</p>
             <a href="https://vegarem.no" target="_blank" rel="noopener">vegarem.no<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
           </div>
+        </div>
+      </div>
+
+      <hr class="about-divider">
+
+      <div class="skills-row">
+        <div class="section-block">
+          <span class="section-tag">Software</span>
+          <div class="software-cols">
+            <div class="entry"><span>Photoshop</span></div>
+            <div class="entry"><span>Illustrator</span></div>
+            <div class="entry"><span>InDesign</span></div>
+            <div class="entry"><span>After Effects</span></div>
+            <div class="entry"><span>Premiere Pro</span></div>
+            <div class="entry"><span>Blender</span></div>
+            <div class="entry"><span>Glyphs 4</span></div>
+            <div class="entry"><span>Figma</span></div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <span class="section-tag">Skills</span>
+          <div class="entry"><span>Graphic Design</span></div>
+          <div class="entry"><span>Motion Graphics</span></div>
+          <div class="entry"><span>3D Modeling</span></div>
+          <div class="entry"><span>Photography</span></div>
         </div>
       </div>
 
