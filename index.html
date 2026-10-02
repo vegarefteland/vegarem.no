@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261001211422" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261002111626" crossorigin>
   <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261001211422";
+    var MANIFEST_V = "20261002111626";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -223,7 +223,6 @@
       --sheen:        rgba(0, 0, 0, 0.07);
       --sheen-strong: rgba(0, 0, 0, 0.14);
       --placeholder:#d4d4d4;
-      --hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
       --gap:        6px;
       --proj-radius: 10px;  /* outer corner rounding of the whole project block */
       /* Geist, self-hosted — see the @font-face at the top of the file
@@ -250,7 +249,6 @@
       --sheen:        rgba(255, 255, 255, 0.16);
       --sheen-strong: rgba(255, 255, 255, 0.34);
       --placeholder:#1e1e1e;
-      --hover-shadow: 0 0 14px rgba(255, 255, 255, 0.055);
     }
 
     /* Custom mode — its own theme. JS sets --bg/--nav-bg from the picker,
@@ -270,7 +268,6 @@
       --sheen:        rgba(0, 0, 0, 0.07);
       --sheen-strong: rgba(0, 0, 0, 0.14);
       --placeholder:#d4d4d4;
-      --hover-shadow: 0 6px 24px rgba(0, 0, 0, 0.13);
     }
 
     /* ─── Base ───────────────────────────────────────────────── */
@@ -346,7 +343,7 @@
 
     @media (prefers-reduced-motion: reduce) {
       .page, .project-card img, .archive-img, .archive-img img,
-      .project-arrow, .project-card::after, .skills-reel,
+      .project-arrow, .project-card::after,
       #page-about .about-wrap > *,
       .project-left .section-tag, .project-left .project-desc { transition: none !important; animation: none !important; }
       .archive-img { opacity: 1 !important; } /* cascade gated visibility — restore */
@@ -395,9 +392,6 @@
       white-space: nowrap;
       transition: background var(--theme-transition), border-color var(--theme-transition), box-shadow 250ms ease;
     }
-    .nav-pill:hover {
-      box-shadow: var(--hover-shadow);
-    }
 
     [data-theme="dark"] .nav-pill,
     [data-theme="dark"] .project-label,
@@ -420,10 +414,12 @@
       color: var(--pill-ink);
       user-select: none;
       white-space: nowrap;
-      /* hover-out: wait for wheel to disappear, then slide name back in */
+      /* hover-out: wait for the label to clear, then slide name back in */
       transition: opacity 220ms ease 140ms, transform 300ms var(--ease-out) 140ms;
     }
-    .nav-pill-center:hover .nav-pill-name {
+    /* Not on the home page: there's nothing to swap in there, so the name
+       simply stays. Elsewhere it makes way for the "Home" label. */
+    .nav-pill-center:not(.is-home):hover .nav-pill-name {
       opacity: 0;
       transform: translateY(-6px);
       pointer-events: none;
@@ -431,47 +427,6 @@
       transition: opacity 160ms ease, transform 200ms var(--ease-out);
     }
 
-    /* ─── Skills wheel (home page only) ──────────────────── */
-    .skills-wheel {
-      position: absolute;
-      inset: 0;
-      display: none; /* hidden by default — only enabled on home page via .is-home */
-      align-items: flex-start;
-      justify-content: center;
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      /* hover-out: wheel exits immediately */
-      transition: opacity 140ms ease;
-    }
-    .nav-pill-center.is-home .skills-wheel { display: flex; }
-    .nav-pill-center.is-home:hover .skills-wheel {
-      opacity: 1;
-      /* hover-in: wheel fades in after name is gone */
-      transition: opacity 200ms ease 140ms;
-    }
-
-    .skills-reel {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .skills-reel span {
-      font-size: 13.5px;
-      font-weight: 400;
-      color: var(--pill-ink);
-      white-space: nowrap;
-      height: 36px;
-      line-height: 36px;
-      display: block;
-    }
-    .nav-pill-center.is-home:hover .skills-reel {
-      animation: skillsWheel 5s linear infinite;
-    }
-    @keyframes skillsWheel {
-      from { transform: translateY(0); }
-      to   { transform: translateY(-50%); }
-    }
 
     /* ─── "Home" label (every page except home) ──────────── */
     .home-label {
@@ -485,6 +440,9 @@
     }
     .nav-pill-center.is-home .home-label { display: none; }
     .home-label span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 13.5px;
       font-weight: 400;
       color: var(--pill-ink);
@@ -493,6 +451,8 @@
       /* hover-out: slide back down before the name returns */
       transition: opacity 140ms ease, transform 300ms var(--ease-out);
     }
+    /* Same arrow as the project-cover buttons, after the word. */
+    .home-label span svg { width: 10px; height: 10px; flex: none; }
     .nav-pill-center:hover .home-label span {
       transform: translateY(0);
       opacity: 1;
@@ -541,7 +501,6 @@
                   box-shadow 250ms ease;
     }
     [data-theme="dark"] .contact-pop { border-color: rgba(255, 255, 255, 0.07); }
-    .contact-pop:hover { box-shadow: var(--hover-shadow); }
 
     .contact-pop.open    { display: flex; animation: contactPopIn 460ms var(--ease-out) both; }
     .contact-pop.closing { animation: contactPopOut 200ms ease both; }
@@ -630,9 +589,6 @@
       background: var(--placeholder);
       border-radius: 4px;
       transition: box-shadow 250ms ease;
-    }
-    .project-card:hover {
-      box-shadow: var(--hover-shadow);
     }
 
     /* LQIP shimmer: subtle sheen across the placeholder while loading.
@@ -1374,7 +1330,7 @@
       justify-content: center;
       transition: opacity 180ms ease, box-shadow 250ms ease;
     }
-    .lightbox-close:hover { opacity: 0.75; box-shadow: var(--hover-shadow); }
+    .lightbox-close:hover { opacity: 0.75; }
     [data-theme="dark"] .lightbox-close { border-color: rgba(255,255,255,0.07); }
 
     .lightbox-prev,
@@ -1403,7 +1359,7 @@
     .lightbox.open .lightbox-prev,
     .lightbox.open .lightbox-next { opacity: 1; pointer-events: all; }
     .lightbox-prev:hover,
-    .lightbox-next:hover { opacity: 0.75; box-shadow: var(--hover-shadow); }
+    .lightbox-next:hover { opacity: 0.75; }
     [data-theme="dark"] .lightbox-prev,
     [data-theme="dark"] .lightbox-next { border-color: rgba(255,255,255,0.07); }
     .lightbox-prev.hidden,
@@ -2009,7 +1965,6 @@
     html[data-pill="liquid"] .customize-btn:hover,
     html[data-pill="liquid"] .focus-btn:hover {
       background-position: 100% 50%, 0 0, 0 0;
-      filter: brightness(1.06) saturate(1.12);
     }
 
     /* ── 3. Aurora — the soft "Create" button ─────────────────────────
@@ -2691,7 +2646,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 1. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 2. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.0</p>
           </div>
@@ -2810,19 +2765,7 @@
     <div class="nav-pill" id="nav-left"></div>
     <div class="nav-pill nav-pill-center">
       <span class="nav-pill-name">Vegar Efteland Melhus</span>
-      <div class="skills-wheel" aria-hidden="true">
-        <div class="skills-reel">
-          <span>Graphic Design</span>
-          <span>Motion Graphics</span>
-          <span>3D Modeling</span>
-          <span>Photography</span>
-          <span>Graphic Design</span>
-          <span>Motion Graphics</span>
-          <span>3D Modeling</span>
-          <span>Photography</span>
-        </div>
-      </div>
-      <div class="home-label" aria-hidden="true"><span>← Home</span></div>
+      <div class="home-label" aria-hidden="true"><span>Home<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
     </div>
     <div class="nav-pill" id="nav-right"></div>
   </nav>
@@ -4330,7 +4273,7 @@
 
       if (currentPage === "project" && currentProject) {
         center.textContent = currentProject.title;
-        left.appendChild(makeNavLink("home", "← Home"));
+        left.appendChild(makeNavLink("home", "Home"));
       } else {
         center.textContent = "Vegar Efteland Melhus";
         left.appendChild(makeNavLink("home", "Home"));
