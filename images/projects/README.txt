@@ -16,3 +16,4 @@ Structure:
 Folders match the project order in index.html (SITE.projects).
 Missing images are silently skipped — no code changes needed.
 Supported formats: jpg, png, gif, webp
+

@@ -12,7 +12,7 @@
   <meta property="og:type"        content="website">
   <meta property="og:url"         content="https://vegarem.no/">
   <meta property="og:title"       content="Vegar Efteland Melhus">
-  <meta property="og:image"       content="https://vegarem.no/images/projects/01/cover.webp">
+  <meta property="og:image"       content="https://vegarem.no/images/projects/06/cover.webp">
   <link rel="icon" href="images/favicon.png" type="image/png">
   <!-- Which files exist + their dimensions. Fetched first so pages can render
        without guessing. Regenerated on every commit by scripts/build-manifest.js -->
@@ -22,8 +22,8 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261002111626" crossorigin>
-  <link rel="preload" as="image" href="images/projects/01/cover.webp" fetchpriority="high">
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261004195910" crossorigin>
+  <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
        third party, no preconnect round-trip, and the face is under our own
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261002111626";
+    var MANIFEST_V = "20261004195910";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -693,6 +693,54 @@
       height: 13px;
     }
 
+    /* Keyword pills – bottom left, revealed on hover. Words come from
+       each project's `keywords` in content.js. Same glass
+       as the label above. Each pill rises in a beat after the one before
+       it (--i is its index, set in JS); on the way out they all drop
+       together, so leaving the card doesn't feel like it lags. */
+    .project-keywords {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .project-keyword {
+      background: var(--pill-bg, var(--nav-bg));
+      color: var(--pill-ink);
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      border: 1px solid rgba(0, 0, 0, 0.07);
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+      font-size: 12.5px;
+      font-weight: 400;
+      padding: 4px 11px;
+      border-radius: 100px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: transform 200ms ease, opacity 160ms ease;
+    }
+    [data-theme="dark"] .project-keyword { border-color: rgba(255, 255, 255, 0.07); }
+    .project-card:hover .project-keyword,
+    .project-card:focus-visible .project-keyword {
+      opacity: 1;
+      transform: none;
+      transition: transform 420ms var(--ease-out), opacity 300ms ease;
+      transition-delay: calc(var(--i, 0) * 55ms);
+    }
+    /* No hover on touch screens, so there's nothing to reveal them there. */
+    @media (hover: none) {
+      .project-keywords { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .project-keyword { transform: none; }
+    }
+
     /* subtle dim overlay on hover to separate label */
     .project-card::after {
       content: '';
@@ -859,28 +907,6 @@
     }
     .customize-btn:hover { opacity: 0.75; }
     .customize-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
-    /* Light sweep — same diagonal highlight as the Focus button, but slower
-       sweep stroke and a stronger highlight for a more visible shimmer */
-    .customize-btn::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        105deg,
-        transparent 20%,
-        var(--sheen-strong) 50%,
-        transparent 80%
-      );
-      transform: translateX(-150%);
-      animation: customizeSweep 2s linear infinite;
-      pointer-events: none;
-      border-radius: inherit;
-    }
-    @keyframes customizeSweep {
-      0%   { transform: translateX(-150%); }
-      35%  { transform: translateX(150%); }
-      100% { transform: translateX(150%); }
-    }
     .customize-panel {
       position: fixed;
       /* `bottom` and `left` set by JS — anchored above the Customize button.
@@ -2163,28 +2189,6 @@
     .focus-btn svg { width: 11px; height: 11px; display: block; }
     @media (max-width: 860px) { .focus-btn { display: none; } }
 
-    /* Light sweep — a diagonal highlight that runs across every 6s */
-    .focus-btn::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        105deg,
-        transparent 20%,
-        var(--sheen) 50%,
-        transparent 80%
-      );
-      transform: translateX(-150%);
-      animation: focusSweep 6s linear infinite;
-      pointer-events: none;
-      border-radius: inherit;
-    }
-    @keyframes focusSweep {
-      0%   { transform: translateX(-150%); }
-      12%  { transform: translateX(150%); }
-      100% { transform: translateX(150%); }
-    }
-
     .focus-mode {
       position: fixed;
       inset: 0;
@@ -2646,7 +2650,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 2. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 4. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.0</p>
           </div>
@@ -2812,10 +2816,10 @@
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
       if (typeof Lenis === "undefined") return null;   // vendor file missing
       return new Lenis({
-        lerp: 0.11,             // a touch quicker than the 0.1 default; less floaty
+        lerp: 0.16,             // toned down from 0.11 — catches up faster, less glide
         smoothWheel: true,
         syncTouch: true,        // smooth on phones and tablets as well
-        syncTouchLerp: 0.09,    // nudged up from 0.075 — keeps it under the thumb
+        syncTouchLerp: 0.12,    // toned down from 0.09 — closer to native touch
         touchInertiaExponent: 1.7,
         autoRaf: true,          // Lenis drives its own rAF loop
         anchors: true,          // in-page #links ease instead of jumping
@@ -4353,9 +4357,22 @@
         if (media.complete && media.naturalWidth > 0) card.classList.add("loaded");
       }
 
+      const keywords = document.createElement("div");
+      keywords.className = "project-keywords";
+      keywords.setAttribute("aria-hidden", "true");   // the title already names the card
+
+      (project.keywords || []).forEach((word, i) => {
+        const pill = document.createElement("span");
+        pill.className = "project-keyword";
+        pill.style.setProperty("--i", i);   // drives the stagger
+        pill.textContent = word;
+        keywords.appendChild(pill);
+      });
+
       card.appendChild(media);
       card.appendChild(label);
       card.appendChild(arrow);
+      card.appendChild(keywords);
 
       card.addEventListener("click", () => openProject(project));
       card.addEventListener("keydown", e => {
