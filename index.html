@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005191214" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005192049" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005191214";
+    var MANIFEST_V = "20261005192049";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -2843,7 +2843,7 @@
               <p class="info-label">Last Updated</p>
               <p class="info-text"><!--LAST_UPDATED-->Oct 5. 2026<!--/LAST_UPDATED--></p>
             </div>
-            <p class="info-version">v3.2 TEST BUILD</p>
+            <p class="info-version">v3.2 TEST BUILD 2</p>
           </div>
         </span>
 
@@ -3191,6 +3191,11 @@
        reduced-motion / missing-file fallbacks as smoothScroll. */
     const aboutScroll = (function () {
       if (!smoothScroll) return null;
+      // Not on touch devices. There About scrolls with the window (flow
+      // mode, see openAbout) and this instance would never be started — and
+      // a *stopped* Lenis cancels every touch inside its wrapper and clips
+      // it (overflow: clip), which made About impossible to scroll on phones.
+      if (window.matchMedia("(hover: none)").matches) return null;
       const lenis = new Lenis({
         wrapper: aboutEl,
         content: aboutEl.querySelector(".about-wrap"),
@@ -3233,6 +3238,9 @@
         const y = window.scrollY;
         if (page) Object.assign(page.style, { position: "fixed", top: -y + "px", left: "0", right: "0" });
         aboutFlow = { page, y };
+        // About is window content now, so let the page's Lenis scroll it
+        // with the same touch feel as everywhere else.
+        aboutEl.removeAttribute("data-lenis-prevent");
         root.classList.add("about-flow");
         aboutEl.classList.add("about-open");
         root.classList.add("about-is-open");   // blurs the pinned page
@@ -3259,6 +3267,7 @@
         aboutFlow = null;
         if (page) Object.assign(page.style, { position: "", top: "", left: "", right: "" });
         root.classList.remove("about-flow");
+        aboutEl.setAttribute("data-lenis-prevent", "");
         scrollWindowTo(y);
         // Already out of the way once the page is back; no fade to wait for.
         aboutEl.classList.remove("about-closing");
