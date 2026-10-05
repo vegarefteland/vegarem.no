@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005225626" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005225640" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005225626";
+    var MANIFEST_V = "20261005225640";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
