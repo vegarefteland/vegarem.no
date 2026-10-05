@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005192446" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005192854" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005192446";
+    var MANIFEST_V = "20261005192854";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -1304,6 +1304,8 @@
        data-lenis-prevent tells Lenis to keep out, since Lenis is stopped
        while it's open. z-index sits under the nav (200) so the pills stay
        usable, and under the Info/Customize panels (100+, portaled to body). */
+    :root { --about-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
+
     #page-about {
       position: fixed;
       /* Not `inset: 0`: on iOS Safari a fixed box pinned to bottom:0 stops
@@ -1322,10 +1324,9 @@
       overscroll-behavior: contain;
       --about-scrim: color-mix(in srgb, var(--bg) 80%, transparent);
       --about-blur: blur(28px) saturate(1.2);
-      /* Subtle film grain over the scrim: generated SVG noise, tiled. As a
-         background layer of the scroll container it stays put while the
-         About content scrolls over it. */
-      --about-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      /* Subtle film grain over the scrim (--about-grain, set on :root so the
+         touch "flow" mode can put it on the body instead). As a background
+         layer of the scroll container it stays put while About scrolls. */
       background-color: var(--about-scrim);
       background-image: var(--about-grain);
       background-size: 130px 130px;   /* drawn at 220, shown smaller = finer grain */
@@ -1355,7 +1356,15 @@
        set in JS), scrolled by the window, so it runs under Safari's
        toolbars like any other page. Absolute so it never shoves the page
        underneath around. */
+    /* The grain goes on the body (which paints the whole canvas) rather than
+       on About, so it's identical everywhere — above, below and behind the
+       toolbars — instead of stopping where the About box ends. */
+    html.about-flow body {
+      background-image: var(--about-grain);
+      background-size: 130px 130px;
+    }
     html.about-flow #page-about {
+      background-image: none;
       position: absolute;
       height: auto;
       min-height: 100vh;
@@ -2844,7 +2853,7 @@
               <p class="info-label">Last Updated</p>
               <p class="info-text"><!--LAST_UPDATED-->Oct 5. 2026<!--/LAST_UPDATED--></p>
             </div>
-            <p class="info-version">v3.2 TEST BUILD 3</p>
+            <p class="info-version">v3.2 TEST BUILD 4</p>
           </div>
         </span>
 
@@ -3237,15 +3246,19 @@
       aboutEl.classList.remove("about-closing");
       if (window.matchMedia("(hover: none)").matches) {
         const y = window.scrollY;
+        const page = document.querySelector(".page.active");
         aboutEl.style.top = y + "px";
-        aboutFlow = { y };
+        aboutFlow = { y, page };
         // About is window content now, so let the page's Lenis scroll it
         // with the same touch feel as everywhere else.
         aboutEl.removeAttribute("data-lenis-prevent");
         root.classList.add("about-flow");
         aboutEl.classList.add("about-open");
         root.classList.add("about-is-open");   // blurs the page underneath
-        if (smoothScroll) smoothScroll.resize();   // About may make the document taller
+        // End the document where About ends: the page underneath is usually
+        // taller, which let you scroll on past About into empty blur.
+        if (page) Object.assign(page.style, { maxHeight: (y + aboutEl.offsetHeight) + "px", overflow: "hidden" });
+        if (smoothScroll) smoothScroll.resize();   // the document changed height
       } else {
         aboutEl.classList.add("about-open");
         root.classList.add("about-is-open");
@@ -3264,9 +3277,10 @@
       aboutEl.classList.add("about-closing");
       clearTimeout(aboutTimer);
       if (aboutFlow) {
-        const { y } = aboutFlow;
+        const { y, page } = aboutFlow;
         aboutFlow = null;
         aboutEl.style.top = "";
+        if (page) Object.assign(page.style, { maxHeight: "", overflow: "" });
         root.classList.remove("about-flow");
         aboutEl.setAttribute("data-lenis-prevent", "");
         scrollWindowTo(y);
