@@ -18,6 +18,9 @@ const SITE = {
    *              (e.g. "2024", "2022–2026", "Ongoing"). Omit to hide.
    * keywords:    optional — pills that rise in on the home-page card
    *              on hover, e.g. ["Branding", "Print"]. Omit for none.
+   * mat:         optional — true puts every side-by-side image on an
+   *              identical light tile, so pieces with slightly different
+   *              proportions (e.g. posters) still line up. Omit for none.
    * ────────────────────────────────────────────────────────────── */
   projects: [
     {
@@ -50,6 +53,7 @@ const SITE = {
       wip: false,
       year: "2023–2026",
       keywords: ["Print", "Poster", "Typography"],
+      mat: true,
       description:
         "Selected poster design projects.\n\n" +
         "School assignments and concept design work.",

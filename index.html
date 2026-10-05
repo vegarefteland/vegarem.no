@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261004195910" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005180833" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261004195910";
+    var MANIFEST_V = "20261005180833";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -288,6 +288,20 @@
       transition: background var(--theme-transition), color var(--theme-transition);
     }
 
+    /* Theme switch — see setThemeInstant. Transitions off for the one
+       frame the theme changes; the cross-fade comes from the View
+       Transition below instead, which fades the whole screen as one. */
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+      transition: none !important;
+    }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 320ms;
+      animation-timing-function: ease;
+    }
+
     /* ─── Theme toggle ───────────────────────────────────────── */
     .theme-toggle {
       position: relative;
@@ -332,13 +346,27 @@
       display: none;
       min-height: 100vh;
       padding: 72px 16px 40px;
-      animation: pageIn 320ms var(--ease-out) both;
+      animation: pageIn 460ms var(--ease-out) both;
     }
     .page.active { display: block; }
 
     @keyframes pageIn {
       from { opacity: 0; transform: translateY(14px) scale(0.99); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* The page on screen fades and lifts away before the next one comes in
+       (see leaveThen). It has to be an animation, not a transition: pageIn
+       holds its last frame (fill: both), and a running animation outranks
+       any plain opacity/transform declaration. Keep the duration in step
+       with PAGE_OUT_MS in the script. */
+    .page.page-leaving {
+      animation: pageOut 200ms ease both;
+      pointer-events: none;
+    }
+    @keyframes pageOut {
+      from { opacity: 1; transform: none; }
+      to   { opacity: 0; transform: translateY(-8px); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -858,9 +886,15 @@
       column-gap: 16px;
     }
 
+    /* The About lines are the inverse of --border (#e8e8e8 ↔ #242424):
+       dark on the light theme, light on the dark one, so they still read
+       over the blurred overlay. */
+    #page-about { --about-line: rgba(23, 23, 23, 0.18); }
+    [data-theme="dark"] #page-about { --about-line: rgba(219, 219, 219, 0.18); }
+
     .about-divider {
       border: none;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--about-line);
       margin: 32px 0;
       width: calc(100vw - 16px - 16px);
     }
@@ -868,7 +902,7 @@
     .about-footer {
       margin-top: 64px;
       padding-top: 20px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--about-line);
       width: calc(100vw - 16px - 16px);
       font-size: 12.5px;
       color: var(--muted);
@@ -1264,6 +1298,29 @@
 
     /* (projectReveal is defined once, further down with the project styles) */
 
+    /* ─── About overlay ──────────────────────────────────────────
+       About isn't a page swap: it opens over whatever is on screen, which
+       stays put (frozen) behind a blur. The overlay scrolls on its own —
+       data-lenis-prevent tells Lenis to keep out, since Lenis is stopped
+       while it's open. z-index sits under the nav (200) so the pills stay
+       usable, and under the Info/Customize panels (100+, portaled to body). */
+    #page-about {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: color-mix(in srgb, var(--bg) 80%, transparent);
+      backdrop-filter: blur(28px) saturate(1.2);
+      -webkit-backdrop-filter: blur(28px) saturate(1.2);
+      animation: none;   /* not the shared pageIn — see aboutIn/aboutOut */
+    }
+    [data-theme="dark"] #page-about { background: color-mix(in srgb, var(--bg) 90%, transparent); }
+    #page-about.about-open    { display: block; animation: aboutIn 320ms ease both; }
+    #page-about.about-closing { display: block; animation: aboutOut 220ms ease both; pointer-events: none; }
+    @keyframes aboutIn  { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes aboutOut { from { opacity: 1; } to { opacity: 0; } }
+
     /* ─── About page — staggered children ───────────────────────── */
     @keyframes contentIn {
       from { opacity: 0; transform: translateY(12px); }
@@ -1407,6 +1464,28 @@
     .project-left {
       position: sticky;
       top: 72px;
+    }
+
+    /* Keywords (from content.js) pinned to the bottom-left of the screen.
+       The sticky column is made at least one screen tall and the row is
+       pushed to its foot, so with a short description the pills sit in the
+       corner, and with a long one they simply follow the text — they can
+       never overlap it. */
+    .project-left.has-keywords {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 72px - 24px);
+    }
+    .project-page-keywords {
+      margin-top: auto;
+      padding-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .project-left .project-page-keywords .section-tag {
+      margin-bottom: 0;
+      animation-delay: 200ms;
     }
 
     .project-left .section-tag {
@@ -1729,6 +1808,48 @@
     .project-row-grid {
       display: grid;
       gap: var(--gap);
+    }
+
+    /* Mat — `mat: true` on a project in content.js. Every image sits centred
+       on an identical tile, like prints hung on a wall, so pieces with
+       slightly different proportions still form a perfectly even grid.
+       Columns go equal (overriding the ratio-based widths set inline), the
+       tile is a fixed 4:5, and the image is contained inside it. The padding
+       leaves room for anything from A-format (0.71) to about 0.8 wide to fit
+       by height, so every piece ends up the same height on its tile. */
+    #page-project.project-matted { --mat: #f1f1f1; }
+    [data-theme="dark"] #page-project.project-matted { --mat: #171717; }
+    .project-matted .project-row-grid {
+      grid-template-columns: none !important;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+    }
+    .project-matted .project-row-grid > .project-img-item {
+      aspect-ratio: 4 / 5;
+      background: var(--mat);
+      padding: 9% 7%;
+      transition: background var(--theme-transition);
+    }
+    .project-matted .project-row-grid > .project-img-item img {
+      position: relative;   /* above the blurred reflection */
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    /* The tile reflects its own poster: the same image, heavily blurred and
+       faded, washed over the mat colour. --mat-src is set from the image once
+       it loads (see the load listener in INIT), so it's the file already in
+       cache — no extra download. Scaled up so the blur's soft, see-through
+       edges fall outside the clipped tile. */
+    .project-matted .project-row-grid > .project-img-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--mat-src) center / cover no-repeat;
+      filter: blur(40px) saturate(1.3);
+      transform: scale(1.35);
+      opacity: 0.25;
+      pointer-events: none;
     }
 
 
@@ -2313,6 +2434,8 @@
         grid-template-columns: 1fr;
       }
       .project-left { position: static; }
+      .project-left.has-keywords { min-height: 0; }   /* stacked: just follow the text */
+      .project-page-keywords { padding-top: 16px; }
       .project-right { padding-right: 0; }
       .back-to-top { margin-left: 0; }
     }
@@ -2554,7 +2677,7 @@
        ABOUT PAGE
        Edit the content below directly in the HTML.
        ══════════════════════════════════════════════════════════════ -->
-  <section id="page-about" class="page" aria-label="About">
+  <section id="page-about" class="page" aria-label="About" data-lenis-prevent>
     <div class="about-wrap">
 
       <span class="section-tag">About</span>
@@ -2637,10 +2760,6 @@
               <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.<br>HTML, CSS & vanilla JavaScript.</p>
             </div>
             <div class="info-section">
-              <p class="info-label">Hosting</p>
-              <p class="info-text">Static files deployed on GitHub Pages with a custom domain.</p>
-            </div>
-            <div class="info-section">
               <p class="info-label">Typography</p>
               <p class="info-text">Set in Geist Light 300 &amp; Regular 400 by Vercel.</p>
             </div>
@@ -2650,9 +2769,9 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 4. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 5. 2026<!--/LAST_UPDATED--></p>
             </div>
-            <p class="info-version">v3.0</p>
+            <p class="info-version">v3.1</p>
           </div>
         </span>
 
@@ -2964,24 +3083,146 @@
       try { history.pushState(state, "", path); } catch(e) {}
     }
 
-    function navigate(pageId) {
+    /* Page transitions: fade the current page out, THEN swap. Rendering a
+       project into #page-project while it's still on screen would show the
+       new content flash in before the fade, so the swap (render + showPage)
+       waits until the old page is gone. A second click mid-fade replaces
+       the pending swap — the newest navigation wins. */
+    const PAGE_OUT_MS = 200;   // match .page-leaving in the CSS
+    let leaveTimer  = null;
+    let leavingPage = null;
+    function leaveThen(swap) {
+      if (leaveTimer) clearTimeout(leaveTimer);
+      const cur = leavingPage || document.querySelector(".page.active");
+      const finish = () => {
+        leaveTimer = null;
+        if (leavingPage) { leavingPage.classList.remove("page-leaving"); leavingPage = null; }
+        swap();
+      };
+      if (!cur || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finish(); return; }
+      leavingPage = cur;
+      cur.style.animation = "";   // the intro leaves `none` inline on #page-home
+      cur.classList.add("page-leaving");
+      leaveTimer = setTimeout(finish, PAGE_OUT_MS);
+    }
+
+    /* About opens as an overlay over the current page (see #page-about)
+       rather than replacing it, so currentPage keeps describing the page
+       underneath and aboutOpen tracks the overlay on its own. */
+    const aboutEl = document.getElementById("page-about");
+    let aboutOpen  = false;
+
+    /* The overlay scrolls itself, so it gets its own Lenis with the same
+       feel as the page. The page's Lenis leaves it alone because of
+       data-lenis-prevent; this one ignores that attribute on its own
+       wrapper (Lenis only checks elements *inside* its root). Same
+       reduced-motion / missing-file fallbacks as smoothScroll. */
+    const aboutScroll = (function () {
+      if (!smoothScroll) return null;
+      const lenis = new Lenis({
+        wrapper: aboutEl,
+        content: aboutEl.querySelector(".about-wrap"),
+        lerp: 0.16,
+        smoothWheel: true,
+        syncTouch: true,
+        syncTouchLerp: 0.12,
+        touchInertiaExponent: 1.7,
+        autoRaf: true,
+      });
+      lenis.stop();   // idle until the overlay opens
+      return lenis;
+    })();
+    let aboutTimer = null;
+    function underlyingPath() {
+      if (currentPage === "project" && currentProject) return "/" + slugify(currentProject.title);
+      return currentPage === "home" ? "/" : "/" + currentPage;
+    }
+    function openAbout() {
+      if (aboutOpen) return;
+      aboutOpen = true;
+      clearTimeout(aboutTimer);
+      aboutEl.classList.remove("about-closing");
+      aboutEl.classList.add("about-open");
+      aboutEl.scrollTop = 0;
+      if (aboutScroll) { aboutScroll.start(); aboutScroll.scrollTo(0, { immediate: true, force: true }); aboutScroll.resize(); }
+      lockScroll(true);
+      renderNav();
+    }
+    function closeAbout() {
+      if (!aboutOpen) return;
+      aboutOpen = false;
+      aboutEl.classList.remove("about-open");
+      aboutEl.classList.add("about-closing");
+      if (aboutScroll) aboutScroll.stop();
+      clearTimeout(aboutTimer);
+      aboutTimer = setTimeout(() => aboutEl.classList.remove("about-closing"), 220);
+      lockScroll(false);
+      renderNav();
+    }
+    // Closing from inside (Escape, clicking the empty space, About again)
+    // puts the address back to the page underneath.
+    function dismissAbout() {
+      if (!aboutOpen) return;
+      closeAbout();
+      pushPath(underlyingPath(), { page: currentPage });
+    }
+    aboutEl.addEventListener("click", e => { if (e.target === aboutEl) dismissAbout(); });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && aboutOpen && !document.querySelector(".info-panel:not([hidden]), .customize-panel:not([hidden])")) dismissAbout();
+    });
+
+    // `after` runs once the new page is on screen (e.g. to scroll within it).
+    function navigate(pageId, after) {
+      if (pageId === "about") {
+        if (aboutOpen) { dismissAbout(); return; }   // About again = close
+        pushPath("/about", { page: "about" });
+        openAbout();
+        if (after) after();
+        return;
+      }
+      if (aboutOpen) {
+        // closeAbout first: it restarts the page's Lenis, which the swap
+        // below needs — a stopped Lenis ignores showPage's scroll-to-top.
+        closeAbout();
+        // Asked for the page that's already underneath: just reveal it.
+        if (pageId === currentPage && pageId !== "project") {
+          pushPath(underlyingPath(), { page: currentPage });
+          return;
+        }
+        // A different page: swap it in underneath straight away, while the
+        // overlay is still covering the screen and fading out. Running the
+        // usual fade-out here showed the old page flicker away through the
+        // overlay before the new one arrived.
+        currentProject = null;
+        pushPath(pageId === "home" ? "/" : "/" + pageId, { page: pageId });
+        showPage(pageId);
+        if (after) after();
+        return;
+      }
       if (pageId === currentPage && pageId !== "project") return;
       currentProject = null;
       pushPath(pageId === "home" ? "/" : "/" + pageId, { page: pageId });
-      showPage(pageId);
+      leaveThen(() => { showPage(pageId); if (after) after(); });
     }
 
     function openProject(project) {
       currentProject = project;
       const slug = slugify(project.title);
       pushPath("/" + slug, { page: "project", slug });
-      renderProjectPage(project);
-      showPage("project");
+      leaveThen(() => { renderProjectPage(project); showPage("project"); });
     }
 
     function restoreFromPath() {
       const path = window.location.pathname.slice(1);
-      if (path === "about" || path === "archive") {
+      if (path === "about") {
+        // Landing on /about directly: the home page goes underneath.
+        if (!document.querySelector(".page.active")) showPage("home");
+        else renderNav();
+        openAbout();
+        return;
+      }
+      closeAbout();
+      if (path === "archive") {
         currentProject = null;
         showPage(path);
       } else if (path) {
@@ -2995,7 +3236,15 @@
 
     // Disable browser scroll restoration so pages always start at top
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-    window.addEventListener("popstate", restoreFromPath);
+    window.addEventListener("popstate", () => {
+      const path = window.location.pathname;
+      if (path === "/about") { openAbout(); return; }
+      // Back out of About to the page that was underneath: no page swap.
+      if (aboutOpen && path === underlyingPath()) { closeAbout(); return; }
+      // Elsewhere from About: swap underneath the fading overlay (see navigate).
+      if (aboutOpen) { closeAbout(); restoreFromPath(); return; }
+      leaveThen(restoreFromPath);
+    });
 
     /* ── Shared video player controls ────────────────────────────────
      * Top level rather than inside renderProjectPage, because the
@@ -3398,6 +3647,7 @@
 
     function renderProjectPage(project) {
       const page = document.getElementById("page-project");
+      page.classList.toggle("project-matted", !!project.mat);   // see .project-matted
 
       // Tear down old observer
       if (projRevealObs) { projRevealObs.disconnect(); projRevealObs = null; }
@@ -3459,9 +3709,15 @@
         ? `<span class="section-tag">${project.year}</span>`
         : "";
 
+      // Optional keyword pills at the foot of the left column.
+      const words = project.keywords || [];
+      const keywordRow = words.length
+        ? `<div class="project-page-keywords">${words.map(w => `<span class="section-tag">${w}</span>`).join("")}</div>`
+        : "";
+
       page.innerHTML = `
         <div class="project-layout">
-          <div class="project-left">
+          <div class="project-left${words.length ? " has-keywords" : ""}">
             <div class="section-tags-row">
               <span class="section-tag">Description</span>
               ${yearPill}
@@ -3470,6 +3726,7 @@
               </button>
             </div>
             <div class="project-desc" data-nosnippet>${paragraphs}</div>
+            ${keywordRow}
           </div>
           <div class="project-right" id="project-right"></div>
         </div>
@@ -4227,8 +4484,9 @@
       a.textContent = label;
       a.setAttribute("href", "#");
       a.setAttribute("role", "button");
-      a.setAttribute("aria-current", id === currentPage ? "page" : "false");
-      if (id === currentPage) a.classList.add("active");
+      const isCurrent = aboutOpen ? id === "about" : id === currentPage;
+      a.setAttribute("aria-current", isCurrent ? "page" : "false");
+      if (isCurrent) a.classList.add("active");
       a.addEventListener("click", e => { e.preventDefault(); navigate(id); });
       a.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate(id); }
@@ -5088,12 +5346,34 @@
     /* ════════════════════════════════════════════════════════════════
      * THEME
      * ════════════════════════════════════════════════════════════════ */
+    /* Light ↔ dark used to flash: every element faded on its own clock —
+       the body over 350ms, pills over 320ms, and plenty of text, borders
+       and placeholders with no transition at all, snapping instantly. For a
+       few frames the page was a patchwork of both themes.
+
+       Now the switch itself is instant (.theme-switching turns every
+       transition off for the one style recalc), and the fade happens on top
+       as a single cross-fade of the whole screen via the View Transitions
+       API, so nothing can drift out of step. Browsers without it just get
+       the clean instant switch. */
+    function setThemeInstant(theme) {
+      const root = document.documentElement;
+      root.classList.add("theme-switching");
+      root.setAttribute("data-theme", theme);
+      getComputedStyle(root).color;   // flush styles while transitions are off
+      root.classList.remove("theme-switching");
+    }
     function toggleTheme() {
       // Only swaps between light/dark. Custom mode is exited via the paintbrush.
       const isDark = document.documentElement.getAttribute("data-theme") === "dark";
       const next = isDark ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (document.startViewTransition && !reduce) {
+        document.startViewTransition(() => setThemeInstant(next));
+      } else {
+        setThemeInstant(next);
+      }
+      try { localStorage.setItem("theme", next); } catch (e) {}
     }
 
     /* ════════════════════════════════════════════════════════════════
@@ -5295,7 +5575,8 @@
 
       // Reposition as the viewport changes (font swaps reflow the page,
       // which fires scroll — repositioning keeps the panel anchored to the button)
-      window.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true });
+      [window, document.getElementById("page-about")].forEach(t =>
+        t.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true }));
       window.addEventListener("resize", () => { if (!panel.hidden) positionPanel(); });
 
       bgInput.addEventListener("input",  e => saveColor("bg",  e.target.value));
@@ -5370,7 +5651,8 @@
         if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
       });
 
-      window.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true });
+      [window, document.getElementById("page-about")].forEach(t =>
+        t.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true }));
       window.addEventListener("resize", () => { if (!panel.hidden) positionPanel(); });
     })();
 
@@ -5521,6 +5803,29 @@
      * ════════════════════════════════════════════════════════════════ */
     renderProjects();
 
+    // Matted projects: hand each tile its image for the blurred reflection
+    // (see .project-matted). Two routes, because the page is built two ways:
+    // the manifest path inserts an <img> and lets it load in place (caught by
+    // the load listener — capture phase, since load doesn't bubble), while
+    // the probing fallback used on file:// loads each image first and only
+    // then inserts it, so its load fires before it's on the page at all
+    // (caught by the MutationObserver, which sees it arrive already loaded).
+    (function initMatReflections() {
+      const page = document.getElementById("page-project");
+      const apply = img => {
+        const src = img.currentSrc || img.src;
+        const tile = img.closest(".project-row-grid > .project-img-item");
+        if (tile && src) tile.style.setProperty("--mat-src", `url("${src}")`);
+      };
+      page.addEventListener("load", e => { if (e.target.tagName === "IMG") apply(e.target); }, true);
+      new MutationObserver(records => records.forEach(r => r.addedNodes.forEach(n => {
+        if (n.nodeType !== 1) return;
+        (n.tagName === "IMG" ? [n] : n.querySelectorAll("img")).forEach(img => {
+          if (img.complete && img.naturalWidth) apply(img);
+        });
+      }))).observe(page, { childList: true, subtree: true });
+    })();
+
     // Handle redirect from 404.html (direct URL visits on GitHub Pages)
     const redirectPath = new URLSearchParams(window.location.search).get("p");
     if (redirectPath) {
@@ -5582,10 +5887,10 @@
       }, 6000);
 
       const NAME       = "Vegar Efteland Melhus";
-      const CHAR_MS    = 55;
+      const CHAR_MS    = 40;
       const GROUP_IN   = 80;
-      const TYPE_START = 380;
-      const HOLD_MS    = 480;
+      const TYPE_START = 260;
+      const HOLD_MS    = 320;
 
       // Lock pill to its final width before typing so it never resizes
       introText.textContent = NAME;
@@ -5824,7 +6129,7 @@
         // The About page already shows the contact details, so the popup
         // would only be in the way there. Wait it out instead of giving up —
         // they may well move on.
-        if (currentPage === "about") {
+        if (aboutOpen) {
           setTimeout(show, RETRY);
           return;
         }
@@ -5833,13 +6138,16 @@
 
       go.addEventListener("click", () => {
         dismiss();
-        navigate("about");
-        // showPage() is synchronous and the About page is static markup, so
-        // it is laid out by the time this runs — no waiting for a frame.
-        const target = document.getElementById("about-contact");
-        if (!target) return;
-        if (smoothScroll) smoothScroll.scrollTo(target, { offset: -90 });
-        else target.scrollIntoView({ behavior: "smooth", block: "start" });
+        // About opens synchronously as an overlay and is static markup, so
+        // it's laid out by the time the callback runs.
+        navigate("about", () => {
+          // About scrolls inside its overlay, not the window.
+          const target = document.getElementById("about-contact");
+          if (!target) return;
+          if (aboutScroll) { aboutScroll.scrollTo(target, { offset: -90 }); return; }
+          const top = target.getBoundingClientRect().top - aboutEl.getBoundingClientRect().top + aboutEl.scrollTop - 90;
+          aboutEl.scrollTo({ top, behavior: "smooth" });
+        });
       });
 
       close.addEventListener("click", dismiss);
