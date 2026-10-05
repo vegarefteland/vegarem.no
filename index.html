@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005180833" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005183150" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005180833";
+    var MANIFEST_V = "20261005183150";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -1310,16 +1310,45 @@
       z-index: 90;
       overflow-y: auto;
       overscroll-behavior: contain;
-      background: color-mix(in srgb, var(--bg) 80%, transparent);
-      backdrop-filter: blur(28px) saturate(1.2);
-      -webkit-backdrop-filter: blur(28px) saturate(1.2);
+      --about-scrim: color-mix(in srgb, var(--bg) 80%, transparent);
+      --about-blur: blur(28px) saturate(1.2);
+      /* Subtle film grain over the scrim: generated SVG noise, tiled. As a
+         background layer of the scroll container it stays put while the
+         About content scrolls over it. */
+      --about-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      background-color: var(--about-scrim);
+      background-image: var(--about-grain);
+      background-size: 130px 130px;   /* drawn at 220, shown smaller = finer grain */
+      backdrop-filter: var(--about-blur);
+      -webkit-backdrop-filter: var(--about-blur);
       animation: none;   /* not the shared pageIn — see aboutIn/aboutOut */
     }
-    [data-theme="dark"] #page-about { background: color-mix(in srgb, var(--bg) 90%, transparent); }
+    [data-theme="dark"] #page-about {
+      --about-scrim: color-mix(in srgb, var(--bg) 90%, transparent);
+    }
+    /* Phones: a lighter blur is far cheaper to render over a moving page
+       and looks the same at that size. */
+    @media (max-width: 600px) {
+      #page-about { --about-blur: blur(18px); }
+    }
+
+    /* The overlay itself never fades its opacity. Mobile Safari drops
+       backdrop-filter on an element while its opacity animates, so the
+       blur popped in late, after the fade. Instead the scrim colour and
+       the blur ramp up together, and the content fades on its own
+       (contentIn on the way in, aboutContentOut on the way out). */
     #page-about.about-open    { display: block; animation: aboutIn 320ms ease both; }
     #page-about.about-closing { display: block; animation: aboutOut 220ms ease both; pointer-events: none; }
-    @keyframes aboutIn  { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes aboutOut { from { opacity: 1; } to { opacity: 0; } }
+    #page-about.about-closing .about-wrap { animation: aboutContentOut 180ms ease both; }
+    @keyframes aboutIn {
+      from { background-color: transparent; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+      to   { background-color: var(--about-scrim); backdrop-filter: var(--about-blur); -webkit-backdrop-filter: var(--about-blur); }
+    }
+    @keyframes aboutOut {
+      from { background-color: var(--about-scrim); backdrop-filter: var(--about-blur); -webkit-backdrop-filter: var(--about-blur); }
+      to   { background-color: transparent; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
+    }
+    @keyframes aboutContentOut { from { opacity: 1; } to { opacity: 0; } }
 
     /* ─── About page — staggered children ───────────────────────── */
     @keyframes contentIn {
