@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005192049" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005192446" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005192049";
+    var MANIFEST_V = "20261005192446";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -1351,9 +1351,10 @@
        frames. `filter` rather than opacity, because pageIn holds the
        page's opacity at 1 (an animation outranks a plain declaration). */
     /* Flow mode (touch — see openAbout): About is plain document content
-       laid over the pinned, blurred page, scrolled by the window, so it
-       runs under Safari's toolbars like any other page. Absolute rather
-       than in the normal flow so it never shoves the pinned page around. */
+       laid over the blurred page from the current scroll position (`top`
+       set in JS), scrolled by the window, so it runs under Safari's
+       toolbars like any other page. Absolute so it never shoves the page
+       underneath around. */
     html.about-flow #page-about {
       position: absolute;
       height: auto;
@@ -2843,7 +2844,7 @@
               <p class="info-label">Last Updated</p>
               <p class="info-text"><!--LAST_UPDATED-->Oct 5. 2026<!--/LAST_UPDATED--></p>
             </div>
-            <p class="info-version">v3.2 TEST BUILD 2</p>
+            <p class="info-version">v3.2 TEST BUILD 3</p>
           </div>
         </span>
 
@@ -3214,15 +3215,16 @@
       if (currentPage === "project" && currentProject) return "/" + slugify(currentProject.title);
       return currentPage === "home" ? "/" : "/" + currentPage;
     }
-    /* Touch devices use "flow" mode. iOS Safari clips a fixed scroll box
-       at the edges of its floating toolbars, so About's text was cut off
-       under the address bar and the strip behind the bottom toolbar never
-       matched. In flow mode the page underneath is pinned in place instead
-       (position: fixed at its current scroll offset, blurred), and About
-       becomes ordinary document content that the window scrolls — so it
-       runs under both toolbars like every other page. Closing un-pins the
-       page and puts the scroll position back exactly where it was. */
-    let aboutFlow   = null;   // { page, y } while flow mode is active
+    /* Touch devices use "flow" mode. iOS Safari doesn't draw *fixed*
+       layers behind its floating toolbars, so a fixed About box got its
+       text cut off under the address bar, and a fixed (pinned) blurred page
+       stopped short of the bottom toolbar. In flow mode nothing is fixed:
+       the page stays where it is in the document, just blurred, and About
+       is placed as ordinary document content starting at the current
+       scroll position — so it opens right where you are, with no jump, and
+       everything runs under both toolbars like any other page. Closing
+       puts the scroll position back exactly where it was. */
+    let aboutFlow   = null;   // { y } while flow mode is active
     function scrollWindowTo(y) {
       if (smoothScroll) { smoothScroll.scrollTo(y, { immediate: true, force: true }); smoothScroll.resize(); }
       else window.scrollTo(0, y);
@@ -3234,17 +3236,16 @@
       const root = document.documentElement;
       aboutEl.classList.remove("about-closing");
       if (window.matchMedia("(hover: none)").matches) {
-        const page = document.querySelector(".page.active");
         const y = window.scrollY;
-        if (page) Object.assign(page.style, { position: "fixed", top: -y + "px", left: "0", right: "0" });
-        aboutFlow = { page, y };
+        aboutEl.style.top = y + "px";
+        aboutFlow = { y };
         // About is window content now, so let the page's Lenis scroll it
         // with the same touch feel as everywhere else.
         aboutEl.removeAttribute("data-lenis-prevent");
         root.classList.add("about-flow");
         aboutEl.classList.add("about-open");
-        root.classList.add("about-is-open");   // blurs the pinned page
-        scrollWindowTo(0);
+        root.classList.add("about-is-open");   // blurs the page underneath
+        if (smoothScroll) smoothScroll.resize();   // About may make the document taller
       } else {
         aboutEl.classList.add("about-open");
         root.classList.add("about-is-open");
@@ -3263,9 +3264,9 @@
       aboutEl.classList.add("about-closing");
       clearTimeout(aboutTimer);
       if (aboutFlow) {
-        const { page, y } = aboutFlow;
+        const { y } = aboutFlow;
         aboutFlow = null;
-        if (page) Object.assign(page.style, { position: "", top: "", left: "", right: "" });
+        aboutEl.style.top = "";
         root.classList.remove("about-flow");
         aboutEl.setAttribute("data-lenis-prevent", "");
         scrollWindowTo(y);
