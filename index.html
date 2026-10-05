@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005193616" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261005225626" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261005193616";
+    var MANIFEST_V = "20261005225626";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -1022,6 +1022,8 @@
       font-weight: 400;
       color: var(--fg);
     }
+    .info-text a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    .info-text a:hover { opacity: 0.7; }
     .info-text {
       font-size: 12.5px;
       line-height: 1.5;
@@ -2817,7 +2819,7 @@
           <div class="info-panel" id="info-panel" hidden>
             <div class="info-section">
               <p class="info-label">Design & Build</p>
-              <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.<br>HTML, CSS & vanilla JavaScript.</p>
+              <p class="info-text">Designed by Vegar Efteland Melhus.<br>Built with Claude Code.</p>
             </div>
             <div class="info-section">
               <p class="info-label">Typography</p>
@@ -2835,52 +2837,22 @@
           </div>
         </span>
 
-
-        <span class="customize-wrap">
-          <button class="customize-btn" id="customize-btn" aria-label="Customize colors" aria-expanded="false">
+        <span class="info-wrap" style="position:relative;display:inline-block;">
+          <button class="info-btn" id="privacy-btn" aria-label="Privacy" aria-expanded="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
-              <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
-            Customize
+            Privacy
           </button>
-          <div class="customize-panel" id="customize-panel" hidden>
-            <div class="customize-row">
-              <span class="customize-label">Background</span>
-              <input type="color" id="customize-bg-input" aria-label="Background color">
+          <div class="info-panel" id="privacy-panel" hidden>
+            <div class="info-section">
+              <p class="info-label">No tracking</p>
+              <p class="info-text">This site sets no cookies and uses no analytics, ads or trackers.</p>
             </div>
-            <div class="customize-row">
-              <span class="customize-label">Pills</span>
-              <input type="color" id="customize-nav-input" aria-label="Pill color">
+            <div class="info-section">
+              <p class="info-label">Hosting</p>
+              <p class="info-text">Hosted on GitHub Pages. GitHub may log basic technical data such as IP addresses for security. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">GitHub's privacy statement</a>.</p>
             </div>
-            <div class="customize-row customize-presets-row">
-              <span class="customize-label">Pill style</span>
-              <div class="customize-presets pill-styles">
-                <button class="pill-style" data-pill="glass"  aria-label="Glass, the default" title="Glass"></button>
-                <button class="pill-style" data-pill="liquid" aria-label="Liquid glass"       title="Liquid"></button>
-                <button class="pill-style" data-pill="aurora" aria-label="Aurora"             title="Aurora"></button>
-              </div>
-            </div>
-            <div class="customize-row customize-presets-row">
-              <span class="customize-label">Presets</span>
-              <div class="customize-presets">
-                <button class="preset" data-bg="#ffffff" data-nav="#ebebeb" style="background: linear-gradient(135deg, #ffffff 50%, #ebebeb 50%);" aria-label="Paper"></button>
-                <button class="preset" data-bg="#ffffff" data-nav="#cde4ef" style="background: linear-gradient(135deg, #ffffff 50%, #cde4ef 50%);" aria-label="Sky"></button>
-                <button class="preset" data-bg="#ffffff" data-nav="#ead4e2" style="background: linear-gradient(135deg, #ffffff 50%, #ead4e2 50%);" aria-label="Blossom"></button>
-                <button class="preset" data-bg="#ffffff" data-nav="#9bb6c5" style="background: linear-gradient(135deg, #ffffff 50%, #9bb6c5 50%);" aria-label="Slate"></button>
-                <button class="preset" data-bg="#ffffff" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #ffffff 50%, #d9ff1a 50%);" aria-label="Citrus"></button>
-                <button class="preset" data-bg="#000000" data-nav="#000000" style="background: #000000;" aria-label="Midnight"></button>
-                <button class="preset" data-bg="#000000" data-nav="#d9ff1a" style="background: linear-gradient(135deg, #000000 50%, #d9ff1a 50%);" aria-label="Neon"></button>
-              </div>
-            </div>
-            <p class="customize-note">
-              click the top left
-              <svg class="customize-note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/>
-                <path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/>
-              </svg>
-              icon to reset
-            </p>
           </div>
         </span>
       </footer>
@@ -5682,9 +5654,13 @@
     })();
 
     /* ── Info panel toggle ───────────────────────────────────────── */
-    (function initInfo() {
-      const btn   = document.getElementById("info-btn");
-      const panel = document.getElementById("info-panel");
+    // Footer popovers (Website Info, Privacy). Only one open at a time:
+    // a pill's click stops propagation, so the outside-click handler of
+    // the *other* popover never sees it — each open closes the rest itself.
+    const footerPopovers = [];
+    function initPopover(btnId, panelId) {
+      const btn   = document.getElementById(btnId);
+      const panel = document.getElementById(panelId);
       if (!btn || !panel) return;
 
       document.body.appendChild(panel);
@@ -5701,6 +5677,7 @@
       }
 
       function openPanel()  {
+        footerPopovers.forEach(close => close());
         panel.hidden = false;
         positionPanel();
         btn.setAttribute("aria-expanded", "true");
@@ -5709,15 +5686,12 @@
         panel.hidden = true;
         btn.setAttribute("aria-expanded", "false");
       }
+      footerPopovers.push(closePanel);
 
       btn.addEventListener("click", e => {
         e.stopPropagation();
         if (panel.hidden) openPanel(); else closePanel();
       });
-
-      // Close when customize button is clicked
-      const customizeBtn = document.getElementById("customize-btn");
-      if (customizeBtn) customizeBtn.addEventListener("click", () => closePanel());
 
       document.addEventListener("click", e => {
         if (!panel.hidden && !panel.contains(e.target) && e.target !== btn) closePanel();
@@ -5726,7 +5700,9 @@
       [window, document.getElementById("page-about")].forEach(t =>
         t.addEventListener("scroll", () => { if (!panel.hidden) positionPanel(); }, { passive: true }));
       window.addEventListener("resize", () => { if (!panel.hidden) positionPanel(); });
-    })();
+    }
+    initPopover("info-btn", "info-panel");
+    initPopover("privacy-btn", "privacy-panel");
 
     /* ════════════════════════════════════════════════════════════════
      * FOCUS MODE
