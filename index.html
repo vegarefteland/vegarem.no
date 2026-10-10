@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261008214046" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261010135137" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261008214046";
+    var MANIFEST_V = "20261010135137";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -2831,7 +2831,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 8. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 10. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.2</p>
           </div>
@@ -2966,10 +2966,13 @@
       // scroll — which is also why scroll-behavior is `auto` in the CSS.
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
       if (typeof Lenis === "undefined") return null;   // vendor file missing
+      // Phones and tablets keep the native scroll — it's what thumbs
+      // expect, and every overlay/page path already handles a null here.
+      if (window.matchMedia("(hover: none)").matches) return null;
       return new Lenis({
         lerp: 0.16,             // toned down from 0.11 — catches up faster, less glide
         smoothWheel: true,
-        syncTouch: true,        // smooth on phones and tablets as well
+        syncTouch: true,        // (touch devices get no Lenis at all — see above)
         syncTouchLerp: 0.12,    // toned down from 0.09 — closer to native touch
         touchInertiaExponent: 1.7,
         autoRaf: true,          // Lenis drives its own rAF loop
