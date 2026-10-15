@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Vegar Efteland Melhus</title>
+  <script>
+    // GitHub Pages 404 fallback: forward path + query + hash to index.html
+    // index.html reads `?p=` and rewrites the URL via history.replaceState.
+    (function () {
+      var loc = window.location;
+      var path = loc.pathname.slice(1);
+      var extra = loc.search ? (loc.search.charAt(0) === '?' ? '&' : '?') + loc.search.slice(1) : '';
+      loc.replace('/?p=' + encodeURIComponent(path) + extra + loc.hash);
+    })();
+  </script>
+</head>
+<body>
+  <noscript>
+    <p>This page requires JavaScript. <a href="/">Return home</a>.</p>
+  </noscript>
+</body>
+</html>
