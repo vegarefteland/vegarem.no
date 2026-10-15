@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261015233003" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261016013504" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261015233003";
+    var MANIFEST_V = "20261016013504";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -999,15 +999,17 @@
     .info-btn:hover { opacity: 0.75; }
     .info-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
 
+    /* Same flat, frosted surface as the pills (--pill-bg): a shade darker
+       than the page in light mode, a shade lighter in dark — no outline,
+       no shadow. */
     .info-panel {
       position: fixed;
-      background: var(--nav-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 0, 0, 0.07);
+      background: var(--pill-bg, var(--nav-bg));
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      border: 1px solid transparent;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
       z-index: 100;
       min-width: 280px;
       max-width: 340px;
@@ -1016,8 +1018,6 @@
       gap: 16px;
       animation: contentIn 220ms var(--ease-out) both;
     }
-    [data-theme="dark"] .info-panel,
-    [data-theme="custom"] .info-panel { border-color: rgba(255, 255, 255, 0.07); }
     .info-panel[hidden] { display: none; }
 
     .info-title {
@@ -2844,7 +2844,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 15. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 16. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.2</p>
           </div>
