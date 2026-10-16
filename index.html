@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261016015401" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261016021201" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -151,7 +151,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261016015401";
+    var MANIFEST_V = "20261016021201";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -616,6 +616,58 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
       padding: 0;
+    }
+
+    /* ─── 404 page ───────────────────────────────────────────── */
+    /* A huge 404 beside two lines and a link, centred in the screen. The
+       digits scramble before settling (see scramble404); tabular figures
+       keep every digit the same width, so nothing shifts while they spin.
+       Sizes are in vw, measured off the reference layout, so the proportions
+       and the negative space hold at any window size: ~17% margin either
+       side, ~5% between the number and the text, both centred vertically. */
+    /* Centred on the whole screen, as in the reference — the nav floats
+       over the top, so the page's usual top/bottom padding is dropped. */
+    #page-404 { padding-top: 0; padding-bottom: 0; }
+    .nf-wrap {
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4.8vw;
+    }
+    .nf-code {
+      font-size: max(120px, 18vw);
+      font-weight: 300;
+      line-height: 0.8;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      animation: contentIn 500ms var(--ease-out) both;
+    }
+    .nf-side { animation: contentIn 500ms var(--ease-out) 120ms both; }
+    .nf-text {
+      font-size: max(18px, 1.9vw);
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+    }
+    .nf-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3em;
+      margin-top: 1.4em;
+      font-size: max(18px, 1.9vw);
+      color: var(--fg);
+      text-decoration: underline;
+      text-decoration-thickness: 1.5px;
+      text-underline-offset: 0.18em;
+      transition: opacity 180ms ease;
+    }
+    .nf-home svg { width: 0.62em; height: 0.62em; flex-shrink: 0; }
+    .nf-home:hover { opacity: 0.7; }
+    @media (max-width: 760px) {
+      .nf-wrap { flex-direction: column; align-items: flex-start; justify-content: center; gap: 28px; }
+      .nf-code { font-size: 40vw; }
     }
 
     @media (max-width: 550px) {
@@ -2877,6 +2929,17 @@
        ARCHIVE PAGE
        Drop numbered images into images/archive/ — no code changes needed.
        ══════════════════════════════════════════════════════════════ -->
+  <!-- 404 — shown for any address that isn't a page (see restoreFromPath) -->
+  <section id="page-404" class="page" aria-label="Page not found">
+    <div class="nf-wrap">
+      <h1 class="nf-code" aria-label="404 — page not found"><span>4</span><span>0</span><span>4</span></h1>
+      <div class="nf-side">
+        <p class="nf-text">There's no page at <span class="nf-path"></span>.<br>It may have moved, or the link has a typo.</p>
+        <a class="nf-home" href="/">Back to home<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+      </div>
+    </div>
+  </section>
+
   <section id="page-archive" class="page" aria-label="Archive">
     <p class="archive-intro"></p>
     <div class="archive-grid" id="archive-grid"></div>
@@ -3188,6 +3251,7 @@
     let aboutTimer = null;
     function underlyingPath() {
       if (currentPage === "project" && currentProject) return "/" + slugify(currentProject.title);
+      if (currentPage === "404") return notFoundPath;
       return currentPage === "home" ? "/" : "/" + currentPage;
     }
     /* Phones and tablets get About as an ordinary page (page swap, like
@@ -3272,8 +3336,48 @@
       leaveThen(() => { renderProjectPage(project); showPage("project"); });
     }
 
+    /* The 404 page shows the address that didn't match, and its digits
+       scramble: each one flicks through random numbers, then locks in, left
+       to right — the first after 450ms, the next two 180ms apart. Driven by
+       elapsed time, so it settles on schedule however the frames fall. */
+    let notFoundPath = "/";
+    let scrambleRaf = null;
+    function scramble404() {
+      const digits = [...document.querySelectorAll("#page-404 .nf-code span")];
+      const final = ["4", "0", "4"];
+      cancelAnimationFrame(scrambleRaf);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        digits.forEach((d, i) => { d.textContent = final[i]; });
+        return;
+      }
+      const start = performance.now();
+      let lastFlick = 0;
+      (function frame(now) {
+        const t = now - start;
+        const flick = now - lastFlick >= 55;   // ~18 changes a second: readable, not a blur
+        if (flick) lastFlick = now;
+        let done = true;
+        digits.forEach((d, i) => {
+          if (t >= 450 + i * 180) d.textContent = final[i];
+          else { done = false; if (flick) d.textContent = String(Math.floor(Math.random() * 10)); }
+        });
+        if (!done) scrambleRaf = requestAnimationFrame(frame);
+      })(start);
+    }
+    function renderNotFound(path) {
+      notFoundPath = path;
+      document.querySelector("#page-404 .nf-path").textContent = path;
+      scramble404();
+    }
+    document.querySelector("#page-404 .nf-home").addEventListener("click", e => { e.preventDefault(); navigate("home"); });
+
     function restoreFromPath() {
-      const path = window.location.pathname.slice(1);
+      // Forgiving match: /About/ and /about are the same page, and
+      // /index.html is the home page. Opened from Finder (file://) the
+      // "path" is the file's place on disk — /Users/…/index.html — which
+      // isn't a route at all, so that always means home too.
+      let path = window.location.pathname.slice(1).replace(/\/+$/, "").toLowerCase();
+      if (window.location.protocol === "file:" || path === "index.html") path = "";
       if (path === "about" && aboutIsOverlay()) {
         // Landing on /about directly: the home page goes underneath.
         if (!document.querySelector(".page.active")) showPage("home");
@@ -3288,7 +3392,7 @@
       } else if (path) {
         const project = SITE.projects.find(p => slugify(p.title) === path);
         if (project) { currentProject = project; renderProjectPage(project); showPage("project"); }
-        else showPage("home");
+        else { currentProject = null; renderNotFound(window.location.pathname); showPage("404"); }
       } else {
         showPage("home");
       }
