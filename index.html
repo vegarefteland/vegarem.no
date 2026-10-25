@@ -22,16 +22,16 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261016021201" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261025175423" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
        third party, no preconnect round-trip, and the face is under our own
-       cache headers. Preloaded because the @font-face below is used by the
-       intro, which paints immediately. -->
+       cache headers. Preloaded because the nav and home page use it on
+       first paint. -->
   <link rel="preload" href="fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Critical: runs before first paint — theme + intro cover -->
+  <!-- Critical: runs before first paint — theme -->
   <style>
     /* One variable file covers every weight the site uses (300/400/600)
        instead of three static cuts — 68 KB total. Installed from the
@@ -54,31 +54,6 @@
     html[data-theme="dark"] body { background: #0d0d0d; }
     html[data-theme="custom"],
     html[data-theme="custom"] body { background: var(--bg, #ffffff); }
-    /* The intro's opaque backdrop lives on ::before, not on #intro itself, so
-       it can fade away independently while the name pill stays fully visible
-       and flies up to the nav. */
-    #intro { position: fixed; inset: 0; z-index: 99999; }
-    #intro::before { content: ""; position: absolute; inset: 0; background: #ffffff; }
-    html[data-theme="dark"] #intro::before { background: #0d0d0d; }
-    html[data-theme="custom"] #intro::before { background: var(--bg, #ffffff); }
-    html.intro-done #intro { display: none !important; }
-    /* Hold the home page + nav still while the intro plays, so their entrance
-       animations aren't spent behind the backdrop. `animation: none` matters —
-       a running CSS animation outranks a plain opacity declaration and would
-       otherwise fade everything in while the backdrop still covers it.
-       Released on handoff (see initIntro). */
-    html.intro-pending #page-home,
-    html.intro-pending #page-home .project-card {
-      animation: none !important;
-      opacity: 0 !important;
-    }
-    html.intro-pending #nav-left,
-    html.intro-pending #nav-right,
-    html.intro-pending .nav-pill-center { opacity: 0; }
-    /* Promote the cards to their own compositor layers while the name is
-       still typing, so the layers are ready well before they animate.
-       Promoting at the same instant the animation starts costs a frame. */
-    html.intro-pending .project-card { will-change: transform, opacity; }
   </style>
   <script>
     (function () {
@@ -134,16 +109,6 @@
           document.documentElement.setAttribute("data-pill", pc.pill);
         }
       } catch (e) {}
-
-      try {
-        if (sessionStorage.getItem("introSeen")) {
-          document.documentElement.classList.add("intro-done");
-        } else if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          // Intro will play — hold the page/nav so their entrance can happen
-          // in the open, after the intro hands off (see initIntro).
-          document.documentElement.classList.add("intro-pending");
-        }
-      } catch (e) {}
     })();
 
     // Start fetching the image manifest immediately, in parallel with
@@ -151,7 +116,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261016021201";
+    var MANIFEST_V = "20261025175423";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -305,25 +270,23 @@
     /* ─── Theme toggle ───────────────────────────────────────── */
     .theme-toggle {
       position: relative;
-      width: 22px;
-      height: 22px;
+      width: 26px;
+      height: 26px;
       border: none;
       background: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--pill-ink-quiet);
+      color: var(--pill-ink);
       padding: 0;
       border-radius: 50%;
-      transition: color 180ms ease, background 180ms ease;
       flex-shrink: 0;
     }
-    .theme-toggle:hover { color: var(--pill-ink); background: rgba(128,128,128,0.1); }
     .theme-toggle svg {
       position: absolute;
-      width: 15px;
-      height: 15px;
+      width: 17px;
+      height: 17px;
       transition: opacity 250ms ease, transform 420ms var(--ease-out);
     }
     /* Light mode: moon visible, sun pre-rotated and hidden */
@@ -345,7 +308,7 @@
     .page {
       display: none;
       min-height: 100vh;
-      padding: 72px 16px 40px;
+      padding: 78px 16px 40px;
       animation: pageIn 460ms var(--ease-out) both;
     }
     .page.active { display: block; }
@@ -410,11 +373,11 @@
       -webkit-backdrop-filter: blur(22px) saturate(1.6);
       border: 1px solid rgba(0, 0, 0, 0.07);
       border-radius: 100px;
-      padding: 0 18px;
-      height: 36px;
+      padding: 0 21px;
+      height: 42px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 18px;
       box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
       pointer-events: all;
       white-space: nowrap;
@@ -428,8 +391,7 @@
        all set their own border colours and shadows. */
     .nav-pill, .contact-pop, .project-label, .project-arrow, .project-keyword,
     .section-tag, .info-btn, .focus-btn, .book-auto, .video-play, .icon-btn,
-    .mute-btn, .volume-wrap, .lightbox-close, .lightbox-prev, .lightbox-next,
-    #intro-group {
+    .mute-btn, .volume-wrap, .lightbox-close, .lightbox-prev, .lightbox-next {
       border-color: transparent !important;
       box-shadow: none !important;
     }
@@ -448,69 +410,68 @@
       .nav-pill-center { display: none; }
     }
 
+    /* The centre pill shows the animated logo (see initNavLogo) on its own,
+       or the project title on a project page. Hovering, on any page,
+       widens or narrows the pill to your name — it's the way home. The
+       name also shows for the first few seconds after load (.show-name,
+       set in the markup so it's there on first paint; see initNavLogo).
+       Each slot is a one-column grid so its width can animate between 0fr
+       and 1fr — the pill is centred on translateX(-50%), so it grows out
+       evenly from the middle. */
+    .nav-pill-center { gap: 0; }
+    .nav-pill-slot {
+      display: grid;
+      grid-template-columns: 0fr;
+      min-width: 0;
+      overflow: hidden;
+      transition: grid-template-columns 420ms var(--ease-out);
+    }
+    .nav-pill-slot > * { min-width: 0; }
+
+    .nav-pill-title,
     .nav-pill-name {
       font-family: var(--font);
-      font-size: 13.5px;
+      font-size: 15px;
       font-weight: 400;
       color: var(--pill-ink);
       user-select: none;
       white-space: nowrap;
-      /* hover-out: wait for the label to clear, then slide name back in */
-      transition: opacity 220ms ease 140ms, transform 300ms var(--ease-out) 140ms;
     }
-    /* Not on the home page: there's nothing to swap in there, so the name
-       simply stays. Elsewhere it makes way for the "Home" label. */
-    .nav-pill-center:not(.is-home):hover .nav-pill-name {
-      opacity: 0;
-      transform: translateY(-6px);
-      pointer-events: none;
-      /* hover-in: name exits immediately */
-      transition: opacity 160ms ease, transform 200ms var(--ease-out);
+    .nav-pill-logo {
+      display: block;
+      height: 13px;
+      width: auto;
+      fill: var(--pill-ink);
+      /* Drawn larger than its layout box, so the pill keeps its size. */
+      scale: 1.2;
     }
 
-
-    /* ─── "Home" label (every page except home) ──────────── */
-    .home-label {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      pointer-events: none;
-    }
-    .nav-pill-center.is-home .home-label { display: none; }
-    .home-label span {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 13.5px;
-      font-weight: 400;
-      color: var(--pill-ink);
-      transform: translateY(36px); /* sits below the pill, ready to slide up */
+    /* Whatever is showing fades in after the outgoing one has gone, and
+       the outgoing one leaves quickly, before its slot closes over it. */
+    .nav-pill-logo, .nav-pill-title, .nav-pill-name {
       opacity: 0;
-      /* hover-out: slide back down before the name returns */
-      transition: opacity 140ms ease, transform 300ms var(--ease-out);
+      transition: opacity 140ms ease;
     }
-    /* Same arrow as the project-cover buttons, after the word. */
-    .home-label span svg { width: 10px; height: 10px; flex: none; }
-    .nav-pill-center:hover .home-label span {
-      transform: translateY(0);
+    .nav-pill-center:not(.has-title):not(:hover, .show-name) .nav-pill-logo-slot,
+    .nav-pill-center.has-title:not(:hover, .show-name) .nav-pill-title-slot,
+    .nav-pill-center:is(:hover, .show-name) .nav-pill-name-slot { grid-template-columns: 1fr; }
+    .nav-pill-center:not(.has-title):not(:hover, .show-name) .nav-pill-logo,
+    .nav-pill-center.has-title:not(:hover, .show-name) .nav-pill-title,
+    .nav-pill-center:is(:hover, .show-name) .nav-pill-name {
       opacity: 1;
-      /* hover-in: slide up after the name has cleared */
-      transition: opacity 200ms ease 140ms, transform 320ms var(--ease-out) 140ms;
+      transition: opacity 260ms ease 160ms;
     }
+    /* Let the scaled logo spill past its slot while it's open. */
+    .nav-pill-center:not(.has-title):not(:hover, .show-name) .nav-pill-logo-slot { overflow: visible; }
 
     .nav-pill a {
       font-family: var(--font);
-      font-size: 13.5px;
+      font-size: 15px;
       font-weight: 400;
-      color: var(--pill-ink-quiet);
-      transition: color 180ms ease;
+      /* Full ink always — no quieter resting state, no hover change. */
+      color: var(--pill-ink);
       cursor: pointer;
     }
-    .nav-pill a.active { color: var(--pill-ink); }
-    .nav-pill a:hover  { color: var(--pill-ink); }
     .nav-pill a:focus-visible {
       outline: 2px solid var(--nav-fg);
       outline-offset: 3px;
@@ -1419,7 +1380,7 @@
         height: auto;
         min-height: 100vh;
         overflow: visible;
-        padding: 72px 16px 40px;
+        padding: 78px 16px 40px;
         z-index: auto;
         background: none;
         backdrop-filter: none;
@@ -1590,7 +1551,7 @@
 
     .project-left {
       position: sticky;
-      top: 72px;
+      top: 78px;
     }
 
     /* Keywords (from content.js) pinned to the bottom-left of the screen.
@@ -1601,7 +1562,7 @@
     .project-left.has-keywords {
       display: flex;
       flex-direction: column;
-      min-height: calc(100vh - 72px - 24px);
+      min-height: calc(100vh - 78px - 24px);
     }
     .project-page-keywords {
       margin-top: auto;
@@ -2602,161 +2563,6 @@
       transform-origin: center;
     }
 
-
-    /* ════════════════════════════════════════════════════════════════
-     * INTRO SEQUENCE
-     * ════════════════════════════════════════════════════════════════ */
-    #intro {
-      position: fixed;
-      inset: 0;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: all;
-      transition: opacity 320ms var(--ease-out);
-    }
-    /* The backdrop fades on its own (opacity, so it works in every theme —
-       the per-theme rules only set its colour). The pill sits above it and
-       stays crisp the whole way up to the nav. */
-    #intro::before {
-      transition: opacity 340ms var(--ease-out);
-    }
-    #intro.reveal::before { opacity: 0; }
-    #intro.reveal { pointer-events: none; }
-    #intro.intro-exit {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* Nav pills drop down to meet the name as it arrives */
-    @keyframes navDrop {
-      from { opacity: 0; transform: translateY(-10px); }
-      to   { opacity: 1; transform: none; }
-    }
-    /* Cards rise in during the handoff. Deliberately its own keyframe name
-       (not cardIn) — re-applying an animation with the *same* name doesn't
-       restart it, so the cards would silently stay put. */
-    /* Deliberately translate-only, no scale(). Scaling a card forces the
-       browser to re-rasterize the large cover image on every frame; a plain
-       translate is a pure GPU composite and stays smooth even with six of
-       them running at once. */
-    @keyframes introRise {
-      from { opacity: 0; transform: translateY(26px); }
-      to   { opacity: 1; transform: none; }
-    }
-
-    /* ── Keeping the handoff at 60fps ──────────────────────────────
-       Three things were making it stutter:
-       1. The travelling pill has backdrop-filter: blur(16px). Moving a
-          blurred element forces the browser to re-sample and re-blur what's
-          behind it every frame — and behind it everything is animating too.
-          Dropped for the ~0.5s flight; the real nav pill (still blurred)
-          takes over on landing.
-       2. Nothing was promoted to its own compositor layer, so each frame
-          repainted. will-change fixes that, and is removed afterwards so it
-          doesn't hold memory for the rest of the session.
-       3. The loading shimmer is an infinite animation on every card,
-          competing for the same frames. Paused during the entrance.
-       ─────────────────────────────────────────────────────────────── */
-    html.intro-entering #intro-group {
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
-      will-change: transform;
-    }
-    html.intro-entering .project-card {
-      will-change: transform, opacity;
-    }
-    html.intro-entering .project-card::before {
-      animation: none !important;
-    }
-
-    /* 4. A card normally reveals in three separate steps: the card itself
-          animates in, then its cover fades up over 380ms once it loads, then
-          the shimmer overlay fades out over 280ms. Staggered across six cards
-          that reads as a second wave of movement arriving after the cascade
-          has already settled — the "two animations back to back".
-
-          During the entrance the cover is already decoded (we wait for it, see
-          whenCoversReady), so these two fades have nothing left to reveal.
-          Cut them to zero and let introRise carry the whole card as one motion.
-          Only the transitions are suppressed, never opacity itself — forcing
-          opacity here would make any late-loading cover flash back out when
-          .intro-entering is removed. */
-    html.intro-entering .project-card img,
-    html.intro-entering .project-card video,
-    html.intro-entering .project-card::before {
-      transition: none !important;
-    }
-    html.intro-entering #nav-left,
-    html.intro-entering #nav-right {
-      will-change: transform, opacity;
-    }
-
-    /* Pill — exact nav-pill spec */
-    #intro-group {
-      position: relative;   /* above the fading backdrop */
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--pill-bg, var(--nav-bg));
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(0, 0, 0, 0.07);
-      border-radius: 100px;
-      padding: 0 18px;
-      height: 36px;
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-      white-space: nowrap;
-      overflow: hidden;
-      opacity: 0;
-      transform: translateY(8px) scale(0.97);
-      transition: opacity 320ms var(--ease-out), transform 320ms var(--ease-out);
-    }
-    [data-theme="dark"] #intro-group {
-      border-color: rgba(255, 255, 255, 0.07);
-    }
-    #intro-group.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    #intro-group.intro-exit {
-      opacity: 0;
-      transform: translateY(-6px) scale(0.97);
-    }
-
-    #intro-name {
-      font-size: 13.5px;
-      font-weight: 400;
-      color: var(--nav-fg);
-      font-family: var(--font);
-      white-space: nowrap;
-    }
-
-    #intro-cursor {
-      display: inline-block;
-      width: 1px;
-      height: 0.8em;
-      background: var(--muted);
-      margin-left: 1px;
-      vertical-align: middle;
-      animation: introBlink 0.8s ease infinite;
-    }
-    #intro-cursor.hidden { display: none; }
-
-    @keyframes introBlink {
-      0%, 40%  { opacity: 1; }
-      60%, 100% { opacity: 0; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      #intro, #intro-group, #intro::before { transition: none !important; }
-      html.intro-pending #page-home,
-      html.intro-pending #nav-left,
-      html.intro-pending #nav-right,
-      html.intro-pending .nav-pill-center { opacity: 1 !important; }
-    }
   </style>
 </head>
 
@@ -2784,13 +2590,6 @@
   </svg>
 
   <a class="skip-link" href="#page-home">Skip to content</a>
-
-  <!-- ══ INTRO SEQUENCE ══════════════════════════════════════════ -->
-  <div id="intro" aria-hidden="true" role="presentation">
-    <div id="intro-group">
-      <div id="intro-name"><span id="intro-text"></span><span id="intro-cursor"></span></div>
-    </div>
-  </div>
 
   <!-- ══════════════════════════════════════════════════════════════
        HOME PAGE — Project grid
@@ -2896,7 +2695,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 16. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Oct 25. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.2</p>
           </div>
@@ -2994,9 +2793,10 @@
        ══════════════════════════════════════════════════════════════ -->
   <nav class="top-nav" aria-label="Primary navigation">
     <div class="nav-pill" id="nav-left"></div>
-    <div class="nav-pill nav-pill-center">
-      <span class="nav-pill-name">Vegar Efteland Melhus</span>
-      <div class="home-label" aria-hidden="true"><span>Home<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2 10L10 2M10 2H4M10 2V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>
+    <div class="nav-pill nav-pill-center show-name">
+      <span class="nav-pill-slot nav-pill-logo-slot"><svg class="nav-pill-logo" viewBox="20 155 810 280" aria-hidden="true" focusable="false"><path id="nav-logo-0" d="M296.51,161.83H94.39c-18.6,0-30.87,19.35-22.94,36.17l101.06,214.39c9.14,19.39,36.73,19.39,45.87,0l101.07-214.39c7.93-16.82-4.34-36.17-22.94-36.17Z"/><path id="nav-logo-1" d="M474.87,161.95h-96.99v.02c-9.29-.12-18.62,4.72-23.25,14.52l-101.08,214.27c-7.94,16.82,4.33,36.18,22.93,36.18h202.14c13.89,0,24.24-10.8,25.29-23.27.47-2.1.74-4.28.74-6.52v-205.4h0c0-16.46-13.34-29.79-29.79-29.79Z"/><path id="nav-logo-2" d="M556.98,162.16H750.34A29.79,29.79,0,0,1,780.13,191.95V397.35A29.79,29.79,0,0,1,750.34,427.14H556.98A29.79,29.79,0,0,1,527.19,397.35V191.95A29.79,29.79,0,0,1,556.98,162.16Z"/></svg></span>
+      <span class="nav-pill-slot nav-pill-title-slot"><span class="nav-pill-title"></span></span>
+      <span class="nav-pill-slot nav-pill-name-slot"><span class="nav-pill-name">Vegar Efteland Melhus</span></span>
     </div>
     <div class="nav-pill" id="nav-right"></div>
   </nav>
@@ -3095,12 +2895,6 @@
         if (old && old !== next) {
           old.classList.remove("active");
           old.style.display = "none";
-          // Drop any inline animation override (the intro puts `none` on
-          // #page-home so its fade doesn't compound with the card cascade).
-          // Clearing it here is the only safe moment: the element is hidden,
-          // so re-enabling the stylesheet's `pageIn` can't visibly restart it.
-          // Next time this page is shown, pageIn runs normally.
-          old.style.animation = "";
           old.querySelectorAll("video").forEach(v => { v.pause(); v.muted = true; });
         }
         currentPage = pageId;
@@ -3212,7 +3006,6 @@
       };
       if (!cur || window.matchMedia("(prefers-reduced-motion: reduce)").matches) { finish(); return; }
       leavingPage = cur;
-      cur.style.animation = "";   // the intro leaves `none` inline on #page-home
       cur.classList.add("page-leaving");
       leaveTimer = setTimeout(finish, PAGE_OUT_MS);
     }
@@ -4661,7 +4454,7 @@
     function renderNav() {
       const left   = document.getElementById("nav-left");
       const right  = document.getElementById("nav-right");
-      const center = document.querySelector(".nav-pill-name");
+      const center = document.querySelector(".nav-pill-title");
       const centerPill = document.querySelector(".nav-pill-center");
       left.innerHTML  = "";
       right.innerHTML = "";
@@ -4670,7 +4463,6 @@
       centerPill.setAttribute("role", "button");
       centerPill.setAttribute("tabindex", "0");
       centerPill.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigate("home"); } };
-      centerPill.classList.toggle("is-home", currentPage === "home");
 
       const btn = document.createElement("button");
       btn.className = "theme-toggle";
@@ -4697,11 +4489,15 @@
       });
       left.appendChild(btn);
 
-      if (currentPage === "project" && currentProject) {
+      // About opens over the project, so the pill goes back to the logo.
+      if (currentPage === "project" && currentProject && !aboutOpen) {
         center.textContent = currentProject.title;
+        centerPill.classList.add("has-title");
         left.appendChild(makeNavLink("home", "Home"));
       } else {
-        center.textContent = "Vegar Efteland Melhus";
+        // Keep the last title in place: its slot is closing, and emptying
+        // it now would snap the pill narrow instead of letting it animate.
+        centerPill.classList.remove("has-title");
         left.appendChild(makeNavLink("home", "Home"));
       }
 
@@ -4764,8 +4560,8 @@
         media.src = project.cover;
         media.alt = project.title;
         // NOT lazy: these covers are the home page — lazy-loading the main
-        // content just delays it, and a cover that arrives after the intro
-        // has to fade in on its own, which reads as a second animation.
+        // content just delays it, and a cover that arrives after the cards
+        // have faded in has to fade in on its own, which reads as a second animation.
         media.loading = "eager";
         media.fetchPriority = "high";
         media.decoding = "async";
@@ -6015,256 +5811,145 @@
     });
 
     /* ════════════════════════════════════════════════════════════════
-     * INTRO SEQUENCE
-     * ════════════════════════════════════════════════════════════════ */
-    (function initIntro() {
-      const intro       = document.getElementById("intro");
-      const introGroup  = document.getElementById("intro-group");
-      const introText   = document.getElementById("intro-text");
-      const introCursor = document.getElementById("intro-cursor");
-
-      // Any path that skips the intro must un-hold the page, or it would
-      // stay invisible (see the .intro-pending rule in <head>).
-      const unhold = () => document.documentElement.classList.remove("intro-pending");
-
-      if (!intro) { unhold(); return; }
-
-      // Skip after first view this session
-      if (sessionStorage.getItem("introSeen")) {
-        intro.style.display = "none";
-        unhold();
-        return;
-      }
-
-      // Respect prefers-reduced-motion
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        intro.style.display = "none";
-        sessionStorage.setItem("introSeen", "1");
-        unhold();
-        return;
-      }
-
-      // Safety net. The typing runs on requestAnimationFrame, which browsers
-      // pause entirely in a backgrounded tab — so if the site is opened in a
-      // tab that never gets focused, the intro would sit there half-typed.
-      // After 6s, just finish: show the whole name and hand off.
-      const bail = setTimeout(() => {
-        if (document.documentElement.classList.contains("intro-done")) return;
-        introText.textContent = NAME;
-        exitIntro();
-      }, 6000);
-
-      const NAME       = "Vegar Efteland Melhus";
-      const CHAR_MS    = 40;
-      const GROUP_IN   = 80;
-      const TYPE_START = 260;
-      const HOLD_MS    = 320;
-
-      // Lock pill to its final width before typing so it never resizes
-      introText.textContent = NAME;
-      void introGroup.offsetWidth;
-      introGroup.style.minWidth = introGroup.offsetWidth + "px";
-      introText.textContent = "";
-
-      // Typing is driven off requestAnimationFrame rather than a chain of
-      // setTimeouts: chained timers drift and fire between frames, so letters
-      // land at uneven intervals and the whole thing reads as stuttery. This
-      // derives how many characters *should* be visible from elapsed time, so
-      // it stays even no matter how the frames fall.
-      function typeNext() {
-        const start = performance.now();
-        let shown = 0;
-        function tick(now) {
-          const target = Math.min(NAME.length, Math.floor((now - start) / CHAR_MS));
-          if (target > shown) {
-            shown = target;
-            introText.textContent = NAME.slice(0, shown);
-          }
-          if (shown < NAME.length) requestAnimationFrame(tick);
-          else setTimeout(exitIntro, HOLD_MS);
-        }
-        requestAnimationFrame(tick);
-      }
-
-      /* ── The handoff ────────────────────────────────────────────────
-       * Everything below runs at once, overlapping, so the site assembles
-       * itself around the name rather than appearing after it:
-       *
-       *   0ms    backdrop starts fading   (340ms)
-       *   0ms    name pill flies to nav   (560ms)
-       *   90ms   left nav pill drops in   (400ms)
-       *   150ms  right nav pill drops in  (400ms)
-       *   160ms  cards cascade upward     (460ms each, 45ms apart)
-       *   560ms  pill lands → real nav pill takes over
-       *
-       * Animations are set inline with fill "both", so each element holds
-       * its finished state and there's no class to clean up afterwards.
-       * ────────────────────────────────────────────────────────────── */
-      const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";   // matches --ease-out
-
-      function releasePage() {
-        document.documentElement.classList.remove("intro-pending");
-      }
-
-      function animateSiteIn() {
-        const navL = document.getElementById("nav-left");
-        const navR = document.getElementById("nav-right");
-        if (navL) navL.style.animation = `navDrop 400ms ${EASE} 90ms both`;
-        if (navR) navR.style.animation = `navDrop 400ms ${EASE} 150ms both`;
-
-        // Let the cards carry the motion on their own — suppress the page
-        // container's own fade so the two don't compound into a mushy blur.
-        const home = document.getElementById("page-home");
-        if (home) home.style.animation = "none";
-
-        // Cards rise in, staggered, as the name travels up.
-        document.querySelectorAll(".project-card").forEach((card, i) => {
-          card.style.animation = `introRise 460ms ${EASE} ${160 + i * 45}ms both`;
-        });
-      }
-
-      function finishIntro() {
-        clearTimeout(bail);
-        intro.style.display = "none";
-        sessionStorage.setItem("introSeen", "1");
-        document.documentElement.classList.add("intro-done");
-        releasePage();
-        // NOTE: do *not* clear #page-home's inline `animation: none` here.
-        // This fires at 560ms, while the cards are still cascading (the last
-        // one lands ~845ms). Clearing the inline value doesn't leave the
-        // animation off — it re-exposes the stylesheet's
-        // `.page { animation: pageIn ... }`, which then starts from
-        // `opacity: 0`. The result is the whole grid blanking out and fading
-        // back in on top of cards that had already arrived.
-        //
-        // showPage() clears it instead, when the page is hidden on the way
-        // out, so later navigations still get their normal pageIn fade.
-      }
-
-      /* ── Wait for the covers before the cascade ──────────────────────
-       * A cover that arrives mid-cascade fades itself in on its own clock,
-       * landing after the cards have already settled — that's the second
-       * animation. The intro gives us ~2s of free runway while the name
-       * types, which is normally plenty. Capped, so a slow connection can
-       * delay the site by at most COVER_WAIT_MS rather than hanging it.
-       * ────────────────────────────────────────────────────────────── */
-      const COVER_WAIT_MS = 900;
-
-      function whenCoversReady() {
-        const media = [...document.querySelectorAll(
-          "#page-home .project-card img, #page-home .project-card video")];
-
-        const ready = media.map(m => {
-          if (m.tagName === "VIDEO") {
-            if (m.readyState >= 2) return Promise.resolve();
-            return new Promise(res => {
-              m.addEventListener("loadeddata", res, { once: true });
-              m.addEventListener("error", res, { once: true });
-            });
-          }
-          // decode() finishes the expensive part (turning bytes into pixels)
-          // off the main thread, so the first paint during the cascade is free.
-          const decode = () => (m.decode ? m.decode().catch(() => {}) : Promise.resolve());
-          if (m.complete) return m.naturalWidth > 0 ? decode() : Promise.resolve();
-          return new Promise(res => {
-            m.addEventListener("load", () => decode().then(res), { once: true });
-            m.addEventListener("error", res, { once: true });   // broken cover shouldn't stall the site
-          });
-        });
-
-        return Promise.race([
-          Promise.all(ready),
-          new Promise(res => setTimeout(res, COVER_WAIT_MS)),
-        ]);
-      }
-
-      let exiting = false;
-      function exitIntro() {
-        if (exiting) return;            // bail timer and the typing can both land here
-        exiting = true;
-        introCursor.classList.add("hidden");
-        whenCoversReady().then(runExit);
-      }
-
-      function runExit() {
-        const navPill = document.querySelector(".nav-pill-center");
-        const navRect = navPill ? navPill.getBoundingClientRect() : null;
-        const canFly  = navRect && navRect.width > 0;
-
-        // Reveal the page *first* so the choreography below is actually
-        // visible while the backdrop fades away over it.
-        releasePage();
-        if (navPill) navPill.style.opacity = "0";   // the flying pill stands in for it
-
-        // Promote the moving pieces + drop the pill's backdrop blur for the
-        // duration of the entrance (see the .intro-entering rules).
-        const root = document.documentElement;
-        root.classList.add("intro-entering");
-
-        animateSiteIn();
-        intro.classList.add("reveal");
-
-
-        // Last card lands at ~845ms; release the layer hints just after.
-        setTimeout(() => {
-          root.classList.remove("intro-entering");
-          document.querySelectorAll(".project-card").forEach(c => { c.style.willChange = ""; });
-        }, 1000);
-
-        if (canFly) {
-          const from = introGroup.getBoundingClientRect();
-          const dx = (navRect.left + navRect.width  / 2) - (from.left + from.width  / 2);
-          const dy = (navRect.top  + navRect.height / 2) - (from.top  + from.height / 2);
-
-          introGroup.style.transition = `transform 560ms ${EASE}`;
-          requestAnimationFrame(() => {
-            introGroup.style.transform = `translate(${dx}px, ${dy}px)`;
-          });
-
-
-          setTimeout(() => {
-            finishIntro();
-            if (navPill) navPill.style.opacity = "";   // real pill takes over, same spot
-          }, 560);
-        } else {
-          // No centre pill to fly to (mobile) — the name lifts and fades out
-          // while the page continues assembling underneath.
-          introGroup.style.transition = `transform 380ms ${EASE}, opacity 380ms ease`;
-          requestAnimationFrame(() => {
-            introGroup.style.opacity = "0";
-            introGroup.style.transform = "translateY(-14px)";
-          });
-          setTimeout(() => {
-            finishIntro();
-            if (navPill) navPill.style.opacity = "";
-          }, 400);
-        }
-      }
-
-      // While the name is typing, quietly decode the cover images. Without
-      // this the first paint of each card has to decode mid-cascade, which
-      // shows up as a stutter exactly when the cards are moving.
+     * NAV LOGO
+     * ════════════════════════════════════════════════════════════════
+     * Same mechanical morph as the desktop widget ("Logo Animation" on the
+     * Desktop): each of the logo's three shapes morphs between the logo's
+     * own shapes, corner by corner, and returns to the real logo every few
+     * steps. Draws straight into the <path>s in the centre pill. */
+    (function initNavLogo() {
+      // Show the name first, then hand over to the logo (or project title).
       setTimeout(() => {
-        document.querySelectorAll(".project-card img").forEach(img => {
-          if (img.decode) img.decode().catch(() => {});
+        document.querySelector(".nav-pill-center")?.classList.remove("show-name");
+      }, 2000);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const LOGO_EXACT = [
+        "M296.51,161.83H94.39c-18.6,0-30.87,19.35-22.94,36.17l101.06,214.39c9.14,19.39,36.73,19.39,45.87,0l101.07-214.39c7.93-16.82-4.34-36.17-22.94-36.17Z",
+        "M474.87,161.95h-96.99v.02c-9.29-.12-18.62,4.72-23.25,14.52l-101.08,214.27c-7.94,16.82,4.33,36.18,22.93,36.18h202.14c13.89,0,24.24-10.8,25.29-23.27.47-2.1.74-4.28.74-6.52v-205.4h0c0-16.46-13.34-29.79-29.79-29.79Z",
+        "M556.98,162.16H750.34A29.79,29.79,0,0,1,780.13,191.95V397.35A29.79,29.79,0,0,1,750.34,427.14H556.98A29.79,29.79,0,0,1,527.19,397.35V191.95A29.79,29.79,0,0,1,556.98,162.16Z",
+      ];
+      const LOGO_CORNERS = [
+        { v: [[54.40, 161.83], [336.50, 161.83], [195.445, 461.045]], r: [25.35, 25.35, 25.35] },
+        { v: [[361.49, 161.95], [504.65, 161.95], [504.65, 426.94], [236.48, 426.94]], r: [25.4, 29.79, 28, 25.4] },
+        { v: [[527.19, 162.16], [780.13, 162.16], [780.13, 427.14], [527.19, 427.14]], r: [29.79, 29.79, 29.79, 29.79] },
+      ];
+      const LOGO_ORIGINAL = [0, 1, 2];
+      const LOGO_ARC = 24, LOGO_SIDE = 16, LOGO_MORPH_MS = 520, LOGO_HOLD_MS = 1100;
+
+      const logoArc = (prev, v, next, r, n) => {
+        const unit = ([x, y]) => { const l = Math.hypot(x, y); return [x / l, y / l]; };
+        const u1 = unit([prev[0] - v[0], prev[1] - v[1]]);
+        const u2 = unit([next[0] - v[0], next[1] - v[1]]);
+        const half = Math.acos(Math.min(1, Math.max(-1, u1[0] * u2[0] + u1[1] * u2[1]))) / 2;
+        const t = r / Math.tan(half);
+        const bis = unit([u1[0] + u2[0], u1[1] + u2[1]]);
+        const c = [v[0] + bis[0] * r / Math.sin(half), v[1] + bis[1] * r / Math.sin(half)];
+        const a1 = Math.atan2(v[1] + u1[1] * t - c[1], v[0] + u1[0] * t - c[0]);
+        let d = Math.atan2(v[1] + u2[1] * t - c[1], v[0] + u2[0] * t - c[0]) - a1;
+        if (d > Math.PI) d -= 2 * Math.PI;
+        if (d < -Math.PI) d += 2 * Math.PI;
+        return Array.from({ length: n }, (_, i) => {
+          const a = a1 + (d * i) / (n - 1);
+          return [c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)];
         });
-      }, 250);
+      };
 
-      // Kick off
-      setTimeout(() => introGroup.classList.add("visible"), GROUP_IN);
-      setTimeout(typeNext, TYPE_START);
+      // 4 corners + 4 sides with fixed point counts, so the same index is the same part on every shape.
+      const logoOutline = ({ v, r }) => {
+        const arcs = v.map((p, i) => logoArc(v[(i + v.length - 1) % v.length], p, v[(i + 1) % v.length], r[i],
+          v.length === 3 && i === 2 ? LOGO_ARC * 2 : LOGO_ARC));
+        if (v.length === 3) {
+          const tip = arcs.pop(); // the triangle's tip stands in for both bottom corners
+          arcs.push(tip.slice(0, LOGO_ARC), tip.slice(LOGO_ARC));
+        }
+        const pts = [];
+        arcs.forEach((a, i) => {
+          pts.push(...a);
+          const from = a[a.length - 1], to = arcs[(i + 1) % 4][0];
+          for (let j = 1; j <= LOGO_SIDE; j++) {
+            const t = j / (LOGO_SIDE + 1);
+            pts.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t]);
+          }
+        });
+        return pts;
+      };
+
+      const logoOutlines = LOGO_CORNERS.map(logoOutline);
+      const lMinX = pts => Math.min(...pts.map(p => p[0]));
+      const lMaxX = pts => Math.max(...pts.map(p => p[0]));
+      const lShift = (pts, dx) => pts.map(([x, y]) => [x + dx, y]);
+      const lDistance = (a, b) => {
+        let best = Infinity;
+        for (const [ax, ay] of a)
+          for (const [bx, by] of b) best = Math.min(best, (ax - bx) ** 2 + (ay - by) ** 2);
+        return Math.sqrt(best);
+      };
+      const LOGO_GAP = lDistance(logoOutlines[1], logoOutlines[2]);
+      const LOGO_CENTER = (lMinX(logoOutlines[0]) + lMaxX(logoOutlines[2])) / 2;
+      const lIsOriginal = st => st.every((v, i) => v === LOGO_ORIGINAL[i]);
+
+      // Neighbours keep the real logo's gap (interlocking where they can); the group stays centred.
+      const logoLayout = st => {
+        if (lIsOriginal(st)) return LOGO_ORIGINAL.map(i => logoOutlines[i]);
+        const placed = [logoOutlines[st[0]]];
+        for (let i = 1; i < 3; i++) {
+          const a = placed[i - 1], b = logoOutlines[st[i]];
+          let lo = lMaxX(a) - lMaxX(b), hi = lMaxX(a) - lMinX(b) + LOGO_GAP * 2;
+          for (let k = 0; k < 30; k++) {
+            const mid = (lo + hi) / 2;
+            if (lDistance(a, lShift(b, mid)) < LOGO_GAP) lo = mid; else hi = mid;
+          }
+          placed.push(lShift(b, hi));
+        }
+        const dx = LOGO_CENTER - (lMinX(placed[0]) + lMaxX(placed[2])) / 2;
+        return placed.map(p => lShift(p, dx));
+      };
+
+      const logoPath = pts => "M" + pts.map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join("L") + "Z";
+      const logoEase = t => t === 0 ? 0 : t === 1 ? 1
+        : t < 0.5 ? Math.pow(2, 20 * t - 10) / 2 : (2 - Math.pow(2, -20 * t + 10)) / 2;
+
+      {
+        let st = [...LOGO_ORIGINAL], current = logoLayout(st);
+        const randomRun = () => 3 + Math.floor(Math.random() * 4);
+        let untilOriginal = randomRun();
+        const els = () => [0, 1, 2].map(i => document.getElementById("nav-logo-" + i));
+        // Random, never three of the same shape, back to the real logo after a random 3–6 steps.
+        const next = () => {
+          if (--untilOriginal <= 0) {
+            untilOriginal = randomRun();
+            return [...LOGO_ORIGINAL];
+          }
+          let s;
+          do { s = [0, 1, 2].map(() => Math.floor(Math.random() * 3)); }
+          while (s.every((v, i) => v === st[i]) || (s[0] === s[1] && s[1] === s[2]) || lIsOriginal(s));
+          return s;
+        };
+        const morph = () => {
+          if (!els()[0]) return setTimeout(morph, LOGO_HOLD_MS); // not on screen yet
+          const target = next(), from = current, to = logoLayout(target), t0 = performance.now();
+          const frame = now => {
+            const t = Math.min((now - t0) / LOGO_MORPH_MS, 1), k = logoEase(t);
+            els().forEach((el, slot) => el && el.setAttribute("d", logoPath(from[slot].map(([x, y], i) =>
+              [x + (to[slot][i][0] - x) * k, y + (to[slot][i][1] - y) * k]))));
+            if (t < 1) return requestAnimationFrame(frame);
+            current = to;
+            st = target;
+            if (lIsOriginal(st)) els().forEach((el, i) => el && el.setAttribute("d", LOGO_EXACT[i]));
+            setTimeout(morph, LOGO_HOLD_MS);
+          };
+          requestAnimationFrame(frame);
+        };
+        setTimeout(morph, LOGO_HOLD_MS);
+      }
     })();
-
 
     /* ════════════════════════════════════════════════════════════════
      * "GET IN TOUCH" POPUP
      * ════════════════════════════════════════════════════════════════
      * Appears bottom left 20s in, then points at the contact block at the
      * foot of the About page.
-     *
-     * The clock starts when the intro finishes, not on load: the intro
-     * holds the page for a few seconds and counting through it would make
-     * the popup land earlier than 20s of actual browsing. */
+ */
     (function initContactPop() {
       const pop   = document.getElementById("contact-pop");
       const go    = document.getElementById("contact-pop-go");
@@ -6323,16 +6008,7 @@
         if (e.key === "Escape" && pop.classList.contains("open")) dismiss();
       });
 
-      const started = () => setTimeout(show, DELAY);
-      if (document.documentElement.classList.contains("intro-done")) started();
-      else {
-        const mo = new MutationObserver(() => {
-          if (!document.documentElement.classList.contains("intro-done")) return;
-          mo.disconnect();
-          started();
-        });
-        mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-      }
+      setTimeout(show, DELAY);
     })();
 
   </script>
