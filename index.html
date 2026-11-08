@@ -22,7 +22,7 @@
        list of which images exist, that shows the old set: new pictures
        missing, deleted ones still there. Must match the fetch below exactly,
        or the preload is thrown away and the file is fetched twice. -->
-  <link rel="preload" as="fetch" href="images/manifest.json?v=20261025180254" crossorigin>
+  <link rel="preload" as="fetch" href="images/manifest.json?v=20261108170125" crossorigin>
   <link rel="preload" as="image" href="images/projects/06/cover.webp" fetchpriority="high">
   <link rel="preload" as="image" href="images/projects/03/cover.webp" fetchpriority="high">
   <!-- Geist is self-hosted (see fonts/). No Google Fonts request: one less
@@ -45,7 +45,6 @@
       font-style: normal;
       font-display: swap;
     }
-
     /* Light is the default; dark/custom only apply when the user opts in.
        For custom mode we use var(--bg) so the JS-set color wins (the
        critical script in <head> sets --bg inline before first paint). */
@@ -116,7 +115,7 @@
     // The version below is rewritten on every commit by the pre-commit hook;
     // keep it identical to the preload href in <head> or the browser treats
     // them as two different files and downloads it twice.
-    var MANIFEST_V = "20261025180254";
+    var MANIFEST_V = "20261108170125";
     window.__manifest = fetch("images/manifest.json?v=" + MANIFEST_V)
       .then(r => r.ok ? r.json() : null)
       .catch(() => null);
@@ -187,7 +186,7 @@
       --pill-solid: #e7e9ee;
       --sheen:        rgba(0, 0, 0, 0.07);
       --sheen-strong: rgba(0, 0, 0, 0.14);
-      --placeholder:#d4d4d4;
+      --placeholder:#f5f5f5;
       --gap:        6px;
       --proj-radius: 10px;  /* outer corner rounding of the whole project block */
       /* Geist, self-hosted — see the @font-face at the top of the file
@@ -213,7 +212,7 @@
       --pill-solid: #3a3d44;
       --sheen:        rgba(255, 255, 255, 0.16);
       --sheen-strong: rgba(255, 255, 255, 0.34);
-      --placeholder:#1e1e1e;
+      --placeholder:#1a1a1a;
     }
 
     /* Custom mode — its own theme. JS sets --bg/--nav-bg from the picker,
@@ -389,7 +388,7 @@
        lighter in dark). The 1px borders stay, transparent, so no pill
        changes size; !important because the theme and pill-style rules
        all set their own border colours and shadows. */
-    .nav-pill, .contact-pop, .project-label, .project-arrow, .project-keyword,
+    .nav-pill, .project-label, .project-arrow, .project-keyword,
     .section-tag, .info-btn, .focus-btn, .book-auto, .video-play, .icon-btn,
     .mute-btn, .volume-wrap, .lightbox-close, .lightbox-prev, .lightbox-next {
       border-color: transparent !important;
@@ -479,99 +478,6 @@
       outline: 2px solid var(--nav-fg);
       outline-offset: 3px;
       border-radius: 4px;
-    }
-
-    /* ─── "Get in touch" popup ─────────────────────────────────────
-       Same glass as the nav pills (see .nav-pill) — the only differences
-       are a softer radius and real padding, because this one holds two
-       lines rather than a row of labels. Bottom left, diagonally opposite
-       the nav so the two never read as one cluster. */
-    .contact-pop {
-      position: fixed;
-      right: 24px;
-      bottom: 24px;
-      z-index: 300;            /* over the page, under the lightbox (500) */
-      display: none;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 13px 14px 14px 18px;
-      border-radius: 22px;
-      background: var(--pill-bg, var(--nav-bg));
-      backdrop-filter: blur(22px) saturate(1.6);
-      -webkit-backdrop-filter: blur(22px) saturate(1.6);
-      border: 1px solid rgba(0, 0, 0, 0.07);
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-      transition: background var(--theme-transition),
-                  border-color var(--theme-transition),
-                  box-shadow 250ms ease;
-    }
-    [data-theme="dark"] .contact-pop { border-color: rgba(255, 255, 255, 0.07); }
-
-    .contact-pop.open    { display: flex; animation: contactPopIn 460ms var(--ease-out) both; }
-    .contact-pop.closing { animation: contactPopOut 200ms ease both; }
-
-    @keyframes contactPopIn {
-      from { opacity: 0; transform: translateY(14px) scale(0.97); }
-      to   { opacity: 1; transform: none; }
-    }
-    @keyframes contactPopOut {
-      to { opacity: 0; transform: translateY(8px) scale(0.98); }
-    }
-
-    .contact-pop-text  { display: flex; flex-direction: column; gap: 2px; }
-    .contact-pop-title {
-      font-family: var(--font);
-      font-size: 13.5px;
-      color: var(--pill-ink);
-    }
-    /* A button, not an <a>: the destination is a client-side route plus a
-       scroll, so there is no URL that does the whole job on its own. */
-    .contact-pop-link {
-      font-family: var(--font);
-      font-size: 13.5px;
-      font-weight: 400;
-      color: var(--pill-ink-quiet);
-      background: none;
-      border: 0;
-      padding: 0;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      transition: color 180ms ease;
-    }
-    .contact-pop-link:hover { color: var(--pill-ink); }
-    .contact-pop-link svg   { width: 11px; height: 11px; flex: none; }
-
-    .contact-pop-close {
-      background: none;
-      border: 0;
-      padding: 4px;
-      margin: -4px -2px 0 0;
-      cursor: pointer;
-      color: var(--pill-ink-quiet);
-      display: flex;
-      transition: color 180ms ease;
-    }
-    .contact-pop-close:hover { color: var(--pill-ink); }
-    .contact-pop-close svg   { width: 11px; height: 11px; }
-
-    .contact-pop-link:focus-visible,
-    .contact-pop-close:focus-visible {
-      outline: 2px solid var(--nav-fg);
-      outline-offset: 3px;
-      border-radius: 4px;
-    }
-
-    /* Desktop only. 600px is the site's own mobile line — the same width
-       below which the centre nav pill and the archive modes drop out. */
-    @media (max-width: 600px) {
-      .contact-pop, .contact-pop.open { display: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .contact-pop.open, .contact-pop.closing { animation: none; }
     }
 
     /* ─── ── HOME PAGE ─────────────────────────────────────────── */
@@ -689,15 +595,10 @@
       /* Slight base scale so the media bleeds past the rounded, clipped card
          edge — kills the 1px dark seam that shows on the top edge on mobile. */
       transform: scale(1.02);
-      transition: transform 550ms var(--ease-out), opacity 380ms ease;
+      transition: opacity 380ms ease;
     }
     .project-card.loaded img,
     .project-card.loaded video { opacity: 1; }
-
-    .project-card:hover img,
-    .project-card:hover video {
-      transform: scale(1.06);
-    }
 
     /* Label – top left */
     /* Same glass as the nav pills — see .nav-pill. These sit directly on the
@@ -858,6 +759,9 @@
     .entry-name {
       font-weight: 400;
     }
+    /* "Currently" entries run two lines each, so they need more air between
+       them than the one-line software/skills lists. */
+    #about-currently .entry + .entry { margin-top: 14px; }
 
     .contact-grid {
       display: grid;
@@ -2609,42 +2513,21 @@
   <section id="page-about" class="page" aria-label="About" data-lenis-prevent>
     <div class="about-wrap">
 
+      <!-- Text comes from SITE.about in content.js (see renderAbout). -->
       <span class="section-tag">About</span>
-      <p class="about-bio">
-        I'm Vegar (20), a second-year Design & Visual Communication student at the University of Bergen.
-      </p>
+      <p class="about-bio" id="about-bio"></p>
 
       <hr class="about-divider">
 
-      <div class="section-block">
+      <div class="section-block" id="about-currently">
         <span class="section-tag">Currently</span>
-        <div class="entry">
-          <span>BA – Design & Visual Communication<br>University of Bergen</span>
-        </div>
       </div>
 
       <hr class="about-divider">
 
       <div class="section-block" id="about-contact">
         <span class="section-tag">Contact</span>
-        <div class="contact-grid">
-          <div class="contact-item">
-            <p class="ci-label">Mail</p>
-            <a href="mailto:vegarefteland@gmail.com">vegarefteland@gmail.com<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          </div>
-          <div class="contact-item">
-            <p class="ci-label">Instagram</p>
-            <a href="https://instagram.com/vegar.efteland" target="_blank" rel="noopener">@vegar.efteland<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          </div>
-          <div class="contact-item">
-            <p class="ci-label">LinkedIn</p>
-            <a href="https://www.linkedin.com/in/vegar-efteland-melhus-702684320/" target="_blank" rel="noopener">Vegar E. Melhus<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          </div>
-          <div class="contact-item">
-            <p class="ci-label">Website</p>
-            <a href="https://vegarem.no" target="_blank" rel="noopener">vegarem.no<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-          </div>
-        </div>
+        <div class="contact-grid" id="about-contact-grid"></div>
       </div>
 
       <hr class="about-divider">
@@ -2652,24 +2535,11 @@
       <div class="skills-row">
         <div class="section-block">
           <span class="section-tag">Software</span>
-          <div class="software-cols">
-            <div class="entry"><span>Photoshop</span></div>
-            <div class="entry"><span>Illustrator</span></div>
-            <div class="entry"><span>InDesign</span></div>
-            <div class="entry"><span>After Effects</span></div>
-            <div class="entry"><span>Premiere Pro</span></div>
-            <div class="entry"><span>Blender</span></div>
-            <div class="entry"><span>Glyphs 4</span></div>
-            <div class="entry"><span>Figma</span></div>
-          </div>
+          <div class="software-cols" id="about-software"></div>
         </div>
 
-        <div class="section-block">
+        <div class="section-block" id="about-skills">
           <span class="section-tag">Skills</span>
-          <div class="entry"><span>Graphic Design</span></div>
-          <div class="entry"><span>Motion Graphics</span></div>
-          <div class="entry"><span>3D Modeling</span></div>
-          <div class="entry"><span>Photography</span></div>
         </div>
       </div>
 
@@ -2698,7 +2568,7 @@
             </div>
             <div class="info-section">
               <p class="info-label">Last Updated</p>
-              <p class="info-text"><!--LAST_UPDATED-->Oct 25. 2026<!--/LAST_UPDATED--></p>
+              <p class="info-text"><!--LAST_UPDATED-->Nov 8. 2026<!--/LAST_UPDATED--></p>
             </div>
             <p class="info-version">v3.2</p>
           </div>
@@ -2803,16 +2673,6 @@
     </div>
     <div class="nav-pill" id="nav-right"></div>
   </nav>
-
-  <!-- Nudge toward the contact details, 20s in. Hidden until then. -->
-  <div class="contact-pop" id="contact-pop" role="dialog" aria-label="Get in touch">
-    <div class="contact-pop-text">
-      <span class="contact-pop-title">Get in touch!</span>
-      <button type="button" class="contact-pop-link" id="contact-pop-go">
-        Show contact page<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </div>
-    <button type="button" class="contact-pop-close" id="contact-pop-close" aria-label="Dismiss"><svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
-  </div>
 
 
   <script src="content.js"></script>
@@ -4520,10 +4380,8 @@
       card.setAttribute("role", "article");
       card.setAttribute("aria-label", project.title);
 
-      // LQIP-lite: use the project's dominant color as the placeholder
-      // so the card shows a tonally-matched block (not flat gray) while
-      // the real cover loads. Falls back to --placeholder if no color set.
-      if (project.color) card.style.background = project.color;
+      // While the cover loads the card shows --placeholder (from the
+      // stylesheet), the same tone for every project in each theme.
 
       const label = document.createElement("span");
       label.className = "project-label";
@@ -5814,6 +5672,54 @@
     });
 
     /* ════════════════════════════════════════════════════════════════
+     * ABOUT
+     * ════════════════════════════════════════════════════════════════
+     * Fills the About page from SITE.about in content.js. The markup keeps
+     * its sections, so the page's entrance cascade is unchanged. */
+    (function renderAbout() {
+      const about = SITE.about;
+      if (!about) return;
+      const ARROW = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2.5 9.5L9.5 2.5M9.5 2.5H4.5M9.5 2.5V7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+      // One .entry per item; \n becomes a line break.
+      const entry = text => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        const span = document.createElement("span");
+        text.split("\n").forEach((line, i) => {
+          if (i) span.appendChild(document.createElement("br"));
+          span.appendChild(document.createTextNode(line));
+        });
+        div.appendChild(span);
+        return div;
+      };
+
+      document.getElementById("about-bio").textContent = about.bio || "";
+      const currently = document.getElementById("about-currently");
+      (about.currently || []).forEach(t => currently.appendChild(entry(t)));
+      const software = document.getElementById("about-software");
+      (about.software || []).forEach(t => software.appendChild(entry(t)));
+      const skills = document.getElementById("about-skills");
+      (about.skills || []).forEach(t => skills.appendChild(entry(t)));
+
+      const grid = document.getElementById("about-contact-grid");
+      (about.contact || []).forEach(({ label, text, url }) => {
+        const item = document.createElement("div");
+        item.className = "contact-item";
+        const p = document.createElement("p");
+        p.className = "ci-label";
+        p.textContent = label;
+        const a = document.createElement("a");
+        a.href = url;
+        if (!url.startsWith("mailto:")) { a.target = "_blank"; a.rel = "noopener"; }
+        a.textContent = text;
+        a.insertAdjacentHTML("beforeend", ARROW);
+        item.append(p, a);
+        grid.appendChild(item);
+      });
+    })();
+
+    /* ════════════════════════════════════════════════════════════════
      * NAV LOGO
      * ════════════════════════════════════════════════════════════════
      * Same mechanical morph as the desktop widget ("Logo Animation" on the
@@ -5947,72 +5853,6 @@
       }
     })();
 
-    /* ════════════════════════════════════════════════════════════════
-     * "GET IN TOUCH" POPUP
-     * ════════════════════════════════════════════════════════════════
-     * Appears bottom left 20s in, then points at the contact block at the
-     * foot of the About page.
- */
-    (function initContactPop() {
-      const pop   = document.getElementById("contact-pop");
-      const go    = document.getElementById("contact-pop-go");
-      const close = document.getElementById("contact-pop-close");
-      if (!pop || !go || !close) return;
-
-      const DELAY   = 20000;
-      const SEEN    = "contactPopSeen";
-      const RETRY   = 3000;
-
-      // Once a visit. Dismissing it or following it counts as seen, so it
-      // doesn't reappear while someone is still reading.
-      if (sessionStorage.getItem(SEEN)) return;
-
-      function dismiss() {
-        sessionStorage.setItem(SEEN, "1");
-        pop.classList.add("closing");
-        pop.addEventListener("animationend", () => {
-          pop.classList.remove("open", "closing");
-        }, { once: true });
-      }
-
-      // Desktop only — matches the CSS breakpoint. Checked at fire time
-      // rather than on load so a resized window still behaves.
-      function wideEnough() { return window.innerWidth > 600; }
-
-      function show() {
-        if (sessionStorage.getItem(SEEN)) return;
-        if (!wideEnough()) { setTimeout(show, RETRY); return; }
-        // The About page already shows the contact details, so the popup
-        // would only be in the way there. Wait it out instead of giving up —
-        // they may well move on.
-        if (aboutOpen) {
-          setTimeout(show, RETRY);
-          return;
-        }
-        pop.classList.add("open");
-      }
-
-      go.addEventListener("click", () => {
-        dismiss();
-        // About opens synchronously as an overlay and is static markup, so
-        // it's laid out by the time the callback runs.
-        navigate("about", () => {
-          // About scrolls inside its overlay, not the window.
-          const target = document.getElementById("about-contact");
-          if (!target) return;
-          if (aboutScroll) { aboutScroll.scrollTo(target, { offset: -90 }); return; }
-          const top = target.getBoundingClientRect().top - aboutEl.getBoundingClientRect().top + aboutEl.scrollTop - 90;
-          aboutEl.scrollTo({ top, behavior: "smooth" });
-        });
-      });
-
-      close.addEventListener("click", dismiss);
-      document.addEventListener("keydown", e => {
-        if (e.key === "Escape" && pop.classList.contains("open")) dismiss();
-      });
-
-      setTimeout(show, DELAY);
-    })();
 
   </script>
 

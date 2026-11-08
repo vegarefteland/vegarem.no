@@ -11,7 +11,6 @@ const SITE = {
    * title:       displayed on the card and project page
    * folder:      image subfolder → images/projects/01/
    * cover:       thumbnail shown on the home grid
-   * color:       background colour while the cover loads
    * layout:      "grid" for 2-column, omit for full-width stack
    * description: text on the project page — use \n\n for a new paragraph
    * year:        optional — shown as a pill next to "Description"
@@ -27,7 +26,6 @@ const SITE = {
        title: "Knurr Display",
       folder: "01",
       cover: "images/projects/01/cover.mp4",
-      color: "#E8E0D5",
       wip: false,
       year: "2026",
       keywords: ["Typeface Design", "Type Specimen Print", "Student Project"],
@@ -38,18 +36,16 @@ const SITE = {
        title: "Arboretet",
       folder: "02",
       cover: "images/projects/02/cover.mp4",
-      color: "#E8E0D5",
       wip: false,
       year: "2026",
       keywords: ["Visual Identity", "Design System", "Student Project"],
       description:
-        "<strong>Student Project in collaboration with:</strong>\n\nDorthea Førland Solem<br>Olga Nørager-Nielsen<br>Sofiia Kundriutskova\n\n\n<strong>Client:</strong><br>Arboretet i Bergen is a botanical garden located at Milde, just south of Bergen, Norway. Spanning over 300 acres, it houses one of the largest collections of trees, shrubs, and plants in Scandinavia.\n\n\n<strong>Concept:</strong><br>Over six weeks, the project moved through market positioning research, analysis of long-term ambitions and values, target audience mapping, concept development, design strategy, and the final visual identity itself.\n\nThe concept explores how one can control the uncontrollable. By this we mean finding systems within chaos and exploring how chaos can be used as an effect to spark curiosity. Controlling the uncontrollable plays on how the plants at \"Arboretet\" are wild, yet do not grow naturally in the area. \"Arboretet\" is a curated, living museum even though it does not appear that way at first glance.",
+        "<strong>Student Project in collaboration with:</strong><br>Dorthea Førland Solem<br>Olga Nørager-Nielsen<br>Sofiia Kundriutskova\n\n\n<strong>Client:</strong><br>Arboretet i Bergen is a botanical garden located at Milde, just south of Bergen, Norway. Spanning over 300 acres, it houses one of the largest collections of trees, shrubs, and plants in Scandinavia.\n\n\n<strong>Concept:</strong><br>Over six weeks, the project moved through market positioning research, analysis of long-term ambitions and values, target audience mapping, concept development, design strategy, and the final visual identity itself.\n\nThe concept explores how one can control the uncontrollable. By this we mean finding systems within chaos and exploring how chaos can be used as an effect to spark curiosity. Controlling the uncontrollable plays on how the plants at \"Arboretet\" are wild, yet do not grow naturally in the area. \"Arboretet\" is a curated, living museum even though it does not appear that way at first glance.",
     },
     {
       title: "Poster Design",
       folder: "03",
       cover: "images/projects/03/cover.webp",
-      color: "#E8E0D5",
       wip: false,
       year: "2023–2026",
       keywords: ["Print", "Poster", "Typography"],
@@ -62,7 +58,6 @@ const SITE = {
       title: "Motion Graphics & Animation",
       folder: "04",
       cover: "images/projects/04/cover.mp4",
-      color: "#E8E0D5",
       wip: false,
       year: "2025–2026",
       keywords: ["Motion Graphics", "Animation"],
@@ -73,7 +68,6 @@ const SITE = {
       title: "Modular Desk Interface",
       folder: "05",
       cover: "images/projects/05/cover.webp",
-      color: "#3D4A5C",
       wip: false,
       year: "2026",
       keywords: ["3D Modeling", "Product Concept", "Blender"],
@@ -86,7 +80,6 @@ const SITE = {
       title: "Formula 1 team merch",
       folder: "06",
       cover: "images/projects/06/cover.webp",
-      color: "#C8B8A2",
       wip: false,
       year: "2025–2026",
       keywords: ["Merch Design", "Product Concept", "Motorsport"],
@@ -103,5 +96,39 @@ const SITE = {
    * by numbering them 01, 02, 03 … (webp / jpg / jpeg / png / gif).
    * ────────────────────────────────────────────────────────────── */
   archiveIntro: "Personal projects, Ideas, Experiments and Concepts",
+
+
+  /* ── About ──────────────────────────────────────────────────────
+   * bio:       the intro paragraph at the top
+   * currently: one entry per line — use \n for a line break inside one
+   * contact:   label above, text shown, and where the link goes
+   *            (mailto: for email; other links open in a new tab)
+   * software:  shown in two columns
+   * skills:    shown in one column next to software
+   * ────────────────────────────────────────────────────────────── */
+  about: {
+    bio: "I'm Vegar (20), a second-year Design & Visual Communication student at the University of Bergen.",
+
+    currently: [
+      "BA – Design & Visual Communication\nFaculty of Fine Art, Music and Design (University of Bergen)",
+      "Volunteer Designer\nBergen sikkerhetskonferanse 2028 (Bergen Security Conference 2028)",
+    ],
+
+    contact: [
+      { label: "Mail",      text: "vegarefteland@gmail.com", url: "mailto:vegarefteland@gmail.com" },
+      { label: "Instagram", text: "@vegar.efteland",         url: "https://instagram.com/vegar.efteland" },
+      { label: "LinkedIn",  text: "Vegar E. Melhus",         url: "https://www.linkedin.com/in/vegar-efteland-melhus-702684320/" },
+      { label: "Website",   text: "vegarem.no",              url: "https://vegarem.no" },
+    ],
+
+    software: [
+      "Photoshop", "Illustrator", "InDesign", "After Effects",
+      "Premiere Pro", "Blender", "Glyphs 4", "Figma",
+    ],
+
+    skills: [
+      "Graphic Design", "Motion Graphics", "3D Modeling", "Photography",
+    ],
+  },
 
 };
